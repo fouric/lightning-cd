@@ -10,6 +10,29 @@ def writeText(window, x, y, text, fg, bg):
     for i in range(len(text)):
         window.change_cell(x + i, y, ord(text[i]), fg, bg)
 
+def getCharRange():
+    chars = ''
+    for i in range(255):
+        if i >= ord('a') and i <= ord('z'):
+            chars = chars + chr(i)
+    return chars
+
+def filenameClean(filename):
+    newFilename = ''
+    filename = filename.lower()
+    acceptableChars = getCharRange()
+    for char in filename:
+        if char in acceptableChars:
+            newFilename = newFilename + char
+    return newFilename
+
+def selectFilesOnSearchbuffer(files, searchbuffer):
+    selected = []
+    for f in files:
+        if searchbuffer == filenameClean(f)[:len(searchbuffer)]:
+            selected.append(f)
+    return selected
+
 def main():
     # modes
     NORMAL = 0
@@ -22,7 +45,8 @@ def main():
         t.clear()
         files = os.listdir('.')
         y = 0
-        others = False
+        if mode == SEARCH:
+            selectedFiles = selectFilesOnSearchbuffer(files, searchbuffer)
         for f in files:
             if mode == NORMAL:
                 if y != selected:
@@ -30,15 +54,12 @@ def main():
                 else:
                     fg, bg = termbox.BLACK, termbox.WHITE
             elif mode == SEARCH:
-                if searchbuffer != f[:len(searchbuffer)]:
-                    fg, bg = termbox.WHITE, 0
-                else:
+                if f in selectedFiles:
                     fg, bg = termbox.BLACK, termbox.WHITE
-                    if not others:
+                    if f == selectedFiles[0]:
                         selected = y
-                        others = True
-                    else:
-                        selected = 0
+                else:
+                    fg, bg = termbox.WHITE, 0
             writeText(t, 0, y, f, fg, bg)
             #if os.path.isfile(files[selected]):
             y += 1
@@ -111,4 +132,8 @@ except Exception, e:
     f = open('error.txt', 'w')
     f.write(traceback.format_exc() + '\n')
     f.close()
+    try:
+        t.close()
+    except:
+        pass
     print traceback.format_exc()
