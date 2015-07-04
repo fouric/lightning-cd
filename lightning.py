@@ -119,7 +119,7 @@ try:# {{{
             elif keycode == termbox.KEY_ARROW_DOWN or letter == 'j':
                 selected = mod(selected + 1, files)
             elif keycode == termbox.KEY_ENTER:
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0])
+                mode, selected, selectedFiles, searchBuffer = action(files[selected])
             elif letter == '.':
                 os.chdir('..')
                 selected = 0
