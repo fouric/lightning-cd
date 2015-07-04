@@ -35,8 +35,11 @@ def getFileIndex(f, files):# {{{
     for i in range(len(files)):
         if f == files[i]:
             return i# }}}
-def drawFileList(t, y, mode, selected, selectedFiles):# {{{
+def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
+    y = ystart
     for f in files:
+        if y == yend:
+            break
         if mode == SEARCH:
             if f in selectedFiles:
                 fg, bg = termbox.BLACK, termbox.WHITE
@@ -101,16 +104,21 @@ try:# {{{
         files = os.listdir('.')
         if mode == SEARCH:
             selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
-        drawFileList(t, 0, mode, selected, selectedFiles)
+        drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
         if mode == SEARCH:
             if len(selectedFiles) == 1 and len(searchBuffer):
                 mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0])
                 continue
             writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
+        writeText(t, 0, 0, os.path.realpath('.'), termbox.WHITE, 0)
         t.present()
 
         event = t.poll_event()
         letter, keycode = event[1], event[2]
+        if letter == '.':
+            os.chdir('..')
+            searchBuffer = ''
+            selected = 0
         if mode == NORMAL:
             if letter == 'q' or keycode == termbox.KEY_ESC:
                 break
@@ -120,9 +128,6 @@ try:# {{{
                 selected = mod(selected + 1, files)
             elif keycode == termbox.KEY_ENTER:
                 mode, selected, selectedFiles, searchBuffer = action(files[selected])
-            elif letter == '.':
-                os.chdir('..')
-                selected = 0
             elif letter == 'b':
                 # TODO: implement stack where you can just go back several times
                 pass
@@ -139,9 +144,6 @@ try:# {{{
             if letter:
                 if letter in getCharRange():
                     searchBuffer = searchBuffer + letter
-                elif letter == '.':
-                    os.chdir('..')
-                    searchBuffer = ''
             if keycode == termbox.KEY_ENTER:
                 mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0])
             elif keycode == termbox.KEY_BACKSPACE2:
