@@ -4,20 +4,18 @@ import traceback
 import termbox
 import os
 
-t = termbox.Termbox()
-
-def writeText(window, x, y, text, fg, bg):
+def writeText(t, x, y, text, fg, bg):# {{{
     for i in range(len(text)):
-        window.change_cell(x + i, y, ord(text[i]), fg, bg)
-
-def getCharRange():
+        t.change_cell(x + i, y, ord(text[i]), fg, bg)
+# }}}
+def getCharRange():# {{{
     chars = ''
     for i in range(255):
         if i >= ord('a') and i <= ord('z'):
             chars = chars + chr(i)
     return chars
-
-def filenameClean(filename):
+# }}}
+def filenameClean(filename):# {{{
     newFilename = ''
     filename = filename.lower()
     acceptableChars = getCharRange()
@@ -25,47 +23,64 @@ def filenameClean(filename):
         if char in acceptableChars:
             newFilename = newFilename + char
     return newFilename
-
-def selectFilesOnSearchbuffer(files, searchbuffer):
+# }}}
+def selectFilesOnSearchbuffer(files, searchbuffer):# {{{
     selected = []
     for f in files:
         if searchbuffer == filenameClean(f)[:len(searchbuffer)]:
             selected.append(f)
     return selected
-
-def main():
+# }}}
+def getFileIndex(files, f):# {{{
+    for i in range(len(files)):
+        if f == files[i]:
+            return i# }}}
+def drawFileList(t, y, files, selectedFiles):# {{{
+    for f in files:
+        if f not in selectedFiles:
+            fg, bg = termbox.WHITE, 0
+        else:
+            fg, bg = termbox.BLACK, termbox.WHITE
+        if os.path.isdir(f):
+            f = f + '/'
+        writeText(t, 0, y, f, fg, bg)
+        y += 1# }}}
+def mod(i, files):# {{{
+    if i >= len(files):
+        i = 0
+    elif i < 0:
+        i = len(files) - 1
+    return i
+# }}}
+def relativeSelect(files, f, relative):# {{{
+    index = getFileIndex(files, f)
+    index += relative
+    index = mod(index, files)
+    return [files[index]]
+# }}}
+def main(t):
     # modes
     NORMAL = 0
     SEARCH = 1
-    searchbuffer = ''
     mode = NORMAL
 
+    searchbuffer = ''
+    selectedFiles = []
     selected = 0
+
     while True:
         t.clear()
         files = os.listdir('.')
-        y = 0
-        if mode == SEARCH:
+        if mode == NORMAL:
+            if len(selectedFiles):
+                selected = getFileIndex(selectedFiles[0], files)
+                selectedFiles = []
+                selected = 0
+            drawFileList(t, 0, files, [files[selected]])
+        elif mode == SEARCH:
             selectedFiles = selectFilesOnSearchbuffer(files, searchbuffer)
-        for f in files:
-            if mode == NORMAL:
-                if y != selected:
-                    fg, bg = termbox.WHITE, 0
-                else:
-                    fg, bg = termbox.BLACK, termbox.WHITE
-            elif mode == SEARCH:
-                if f in selectedFiles:
-                    fg, bg = termbox.BLACK, termbox.WHITE
-                    if f == selectedFiles[0]:
-                        selected = y
-                else:
-                    fg, bg = termbox.WHITE, 0
-            writeText(t, 0, y, f, fg, bg)
-            #if os.path.isfile(files[selected]):
-            y += 1
-
-        if mode == SEARCH:
             writeText(t, 0, t.height() - 1, searchbuffer, termbox.WHITE, 0)
+            drawFileList(t, 0, files, selectedFiles)
         t.present()
 
         event = t.poll_event()
@@ -77,16 +92,17 @@ def main():
             elif keycode == termbox.KEY_ESC:
                 break
             elif keycode == termbox.KEY_ARROW_UP or letter == 'k':
-                selected -= 1
+                selected = mod(selected - 1, files)
             elif keycode == termbox.KEY_ARROW_DOWN or letter == 'j':
-                selected += 1
+                selected = mod(selected + 1, files)
             elif keycode == termbox.KEY_ENTER:
                 if os.path.isdir(files[selected]):
                     os.chdir(files[selected])
                     selected = 0
                 elif os.path.isfile(files[selected]):
-                    # default non-nvim file opening action here
-                    pass
+                    # possibly allow for other actions such as make?
+                    t.close()
+                    os.execvp('nvim', ['nvim', os.path.realpath(files[selected])])
             elif letter == 'u':
                 os.chdir('..')
                 selected = 0
@@ -100,40 +116,38 @@ def main():
                 searchbuffer = ''
                 mode = SEARCH
             elif letter == 'h':
-                # stands for "here" and opens a directory here
-                pass
+                return os.path.realpath('.')
         elif mode == SEARCH:
             if letter:
-                if letter in 'abcdefghijklmnopqrstuvwxyz':
+                if letter in getCharRange():
                     searchbuffer = searchbuffer + letter
             elif keycode == termbox.KEY_SPACE:
                 mode = NORMAL
             elif keycode == termbox.KEY_ENTER:
-                if os.path.isdir(files[selected]):
-                    os.chdir(files[selected])
-                    selected = 0
-                    mode = NORMAL
-                if os.path.isfile(files[selected]):
-                    t.close()
-                    os.execvp('nvim', ['nvim', os.path.realpath(files[selected])])
+                if len(selectedFiles):
+                    if os.path.isdir(selectedFiles[0]):
+                        os.chdir(selectedFiles[0])
+                        selected = 0
+                        mode = NORMAL
+                        selectedFiles = []
+                    elif os.path.isfile(selectedFiles[0]):
+                        t.close()
+                        os.execvp('nvim', ['nvim', os.path.realpath(selectedFiles[0])])
             elif keycode == termbox.KEY_BACKSPACE2:
                 searchbuffer = searchbuffer[:-1]
 
-        if selected >= len(files):
-            selected = 0
-        elif selected < 0:
-            selected = len(files) - 1
-
     t.close()
+    return '.'
 
-try:
-    main()
+try:# {{{
+    tbox = termbox.Termbox()
+    print main(tbox)
 except Exception, e:
     f = open('error.txt', 'w')
     f.write(traceback.format_exc() + '\n')
     f.close()
     try:
-        t.close()
+        tbox.close()
     except:
         pass
-    print traceback.format_exc()
+    print traceback.format_exc()# }}}
