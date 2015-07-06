@@ -90,6 +90,7 @@ def action(f):# {{{
 # }}}
 
 try:# {{{
+    originalPath = os.path.realpath('.')
     NORMAL, SEARCH = 0, 1
     defaultMode = SEARCH
     mode = defaultMode
@@ -152,8 +153,9 @@ try:# {{{
                 mode, selected, searchBuffer, selectedFiles = switchMode(NORMAL, SEARCH, selected, selectedFiles)
 
     t.close()
-    print '.'# }}}
+    print originalPath# }}}
 except Exception, e:# {{{
+    #f = open('~/lightning-cd-error.txt', 'w')
     f = open('error.txt', 'w')
     f.write(traceback.format_exc() + '\n')
     f.close()
