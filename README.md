@@ -12,7 +12,7 @@ Installation
 
 Merely copy lightning.py to someplace convenient and add an alias to it, like so.  Lightning returns a directory if you use the "h" (Here) in normal mode, so an alias such as
 
-alias li='cd `python ~/code/lightning-cd/lightning.py`'
+alias li='cd `python ~/code/lightning-cd/lightning-cd.py`'
 
 will allow you to jump into directories without opening files.
 
