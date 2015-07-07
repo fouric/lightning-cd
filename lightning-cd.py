@@ -156,7 +156,7 @@ try:# {{{
             elif letter == 'n':
                 command(originalPath, 'nautilus ' + os.path.realpath('.'))
             elif letter == 't':
-                command(originalPath, 'tmux')
+                command(originalPath, 'tmux > /dev/null')
         elif mode == SEARCH:
             if letter:
                 if letter in getCharRange():
