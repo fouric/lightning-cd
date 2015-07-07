@@ -19,7 +19,7 @@ will allow you to jump into directories without opening files.
 Usage
 -----
 
-Lightning has two modes: search and normal.  By default, it starts in search mode, and it defaults to search every time you change a directory.  Press space in either mode to toggle between modes, and . (period) in either mode to move one directory upward.  In search mode, typing any lowercase letter will begin to filter files and directories, and after you have typed enough to uniquely identify a file or directory, Lightning will automatically either enter that directory or open that file in NeoVim, depending on whether you have selected a file or directory.  In normal mode, "q" quits, "h" opens up the current directory in your shell, provided that you have the correct alias set, "j" and "k" go down and up, respectively, and "enter" opens the file or directory.
+Lightning has two modes: search and normal.  By default, it starts in search mode, and it defaults to search every time you change a directory.  Press space in either mode to toggle between modes, and , (comma) in either mode to move one directory upward.  In search mode, typing any lowercase letter will begin to filter files and directories, and after you have typed enough to uniquely identify a file or directory, Lightning will automatically either enter that directory or open that file in NeoVim, depending on whether you have selected a file or directory.  In normal mode, "q" quits, "h" opens up the current directory in your shell, provided that you have the correct alias set, "j" and "k" go down and up, respectively, and "enter" opens the file or directory.
 
 Disclaimer
 ---------

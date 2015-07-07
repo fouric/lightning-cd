@@ -13,6 +13,7 @@ def getCharRange():# {{{
     for i in range(255):
         if i >= ord('a') and i <= ord('z'):
             chars = chars + chr(i)
+    chars = chars + '.'
     return chars
 # }}}
 def filenameClean(filename):# {{{
@@ -131,8 +132,7 @@ try:# {{{
 
         event = t.poll_event()
         letter, keycode = event[1], event[2]
-        if letter == '.':
-            # this definitely needs to be changed; '.' is wayyy to common in filenames
+        if letter == ',':
             os.chdir('..')
             searchBuffer = ''
             selected = 0
