@@ -67,16 +67,19 @@ def relativeSelect(f, relative):# {{{
     index = mod(index, files)
     return [files[index]]
 # }}}
-def switchMode(newMode, prevMode, selected, selectedFiles):# {{{
-    if newMode == NORMAL and prevMode == SEARCH:
+def switchMode(prevMode, selected, selectedFiles):# {{{
+    if prevMode == SEARCH:
         selected = 0
         if len(selectedFiles):
             selected = getFileIndex(selectedFiles[0], files)
+        newMode = NORMAL
+    else:
+        newMode = SEARCH
     searchBuffer = ''
     selectedFiles = []
     return (newMode, selected, searchBuffer, selectedFiles)
 # }}}
-def action(f):# {{{
+def action(f, originalPath):# {{{
     if os.path.isdir(f):
         os.chdir(f)
         selected = 0
@@ -85,9 +88,13 @@ def action(f):# {{{
         searchBuffer = ''
         return (mode, selected, selectedFiles, searchBuffer)
     elif os.path.isfile(f):
-        t.close()
-        os.execvp('nvim', ['nvim', os.path.realpath(f)])
+        command(originalPath, 'nvim ' + f)
 # }}}
+def command(path, command):# {{{
+    t.close()
+    print path
+    os.system(command)
+    quit()# }}}
 
 try:# {{{
     originalPath = os.path.realpath('.')
@@ -108,7 +115,7 @@ try:# {{{
         drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
         if mode == SEARCH:
             if len(selectedFiles) == 1 and len(searchBuffer):
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0])
+                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], originalPath)
                 continue
             writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
         writeText(t, 0, 0, os.path.realpath('.'), termbox.WHITE, 0)
@@ -117,40 +124,39 @@ try:# {{{
         event = t.poll_event()
         letter, keycode = event[1], event[2]
         if letter == '.':
+            # this definitely needs to be changed; '.' is wayyy to common in filenames
             os.chdir('..')
             searchBuffer = ''
             selected = 0
-        if mode == NORMAL:
-            if letter == 'q' or keycode == termbox.KEY_ESC:
-                break
-            elif keycode == termbox.KEY_ARROW_UP or letter == 'k':
+        elif keycode == termbox.KEY_SPACE:
+            mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
+        elif keycode == termbox.KEY_ESC:
+            break
+        elif mode == NORMAL:
+            if keycode == termbox.KEY_ARROW_UP or letter == 'k':
                 selected = mod(selected - 1, files)
             elif keycode == termbox.KEY_ARROW_DOWN or letter == 'j':
                 selected = mod(selected + 1, files)
             elif keycode == termbox.KEY_ENTER:
-                mode, selected, selectedFiles, searchBuffer = action(files[selected])
-            elif letter == 'b':
-                # TODO: implement stack where you can just go back several times
-                pass
+                mode, selected, selectedFiles, searchBuffer = action(files[selected], originalPath)
+            elif letter == 'q':
+                break
             elif letter == 'v':
-                t.close()
-                os.execvp('nvim', ['nvim', os.path.realpath(files[selected])])
-            elif keycode == termbox.KEY_SPACE:
-                mode, selected, searchBuffer, selectedFiles = switchMode(SEARCH, NORMAL, selected, selectedFiles)
+                command(originalPath, 'nvim ' + files[selected])
             elif letter == 'h':
-                t.close()
-                print os.path.realpath('.')
-                quit()
+                command(os.path.realpath('.'), 'true')
+            elif letter == 'n':
+                command(originalPath, 'nautilus ' + os.path.realpath('.'))
+            elif letter == 't':
+                command(originalPath, 'tmux')
         elif mode == SEARCH:
             if letter:
                 if letter in getCharRange():
                     searchBuffer = searchBuffer + letter
             if keycode == termbox.KEY_ENTER:
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0])
+                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], originalPath)
             elif keycode == termbox.KEY_BACKSPACE2:
                 searchBuffer = searchBuffer[:-1]
-            elif keycode == termbox.KEY_ESC or keycode == termbox.KEY_SPACE:
-                mode, selected, searchBuffer, selectedFiles = switchMode(NORMAL, SEARCH, selected, selectedFiles)
 
     t.close()
     print originalPath# }}}
