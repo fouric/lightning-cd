@@ -109,7 +109,15 @@ try:# {{{
     t = termbox.Termbox()
     while True:
         t.clear()
-        files = os.listdir('.')
+        files = sorted(os.listdir('.'))
+        normalfiles = []
+        dotfiles = []
+        for f in files:
+            if f[0] == '.':
+                dotfiles.append(f)
+            else:
+                normalfiles.append(f)
+        files = normalfiles + dotfiles
         if mode == SEARCH:
             selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
         drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
