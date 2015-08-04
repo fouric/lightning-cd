@@ -154,9 +154,11 @@ try:# {{{
             elif letter == 'h':
                 command(os.path.realpath('.'), 'true')
             elif letter == 'n':
-                command(originalPath, 'nautilus ' + os.path.realpath('.'))
+                command(originalPath, 'nautilus ' + os.path.realpath('.') + ' > /dev/null 2>&1')
             elif letter == 't':
                 command(originalPath, 'tmux > /dev/null')
+            elif letter == 'T':
+                command(os.path.realpath('.'), 'tmux > /dev/null')
         elif mode == SEARCH:
             if letter:
                 if letter in getCharRange():
