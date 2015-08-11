@@ -4,6 +4,8 @@ import traceback
 import termbox
 import os
 
+showDeselectedFiles = False
+
 def writeText(t, x, y, text, fg, bg):# {{{
     for i in range(len(text)):
         t.change_cell(x + i, y, ord(text[i]), fg, bg)
@@ -41,20 +43,17 @@ def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
     for f in files:
         if y == yend:
             break
-        if mode == SEARCH:
-            if f in selectedFiles:
-                fg, bg = termbox.BLACK, termbox.WHITE
-            else:
-                fg, bg = termbox.WHITE, 0
-        elif mode == NORMAL:
-            if f == files[selected]:
-                fg, bg = termbox.BLACK, termbox.WHITE
-            else:
-                fg, bg = termbox.WHITE, 0
-        if os.path.isdir(f):
-            f = f + '/'
-        writeText(t, 0, y, f, fg, bg)
-        y += 1# }}}
+        elif mode == SEARCH and f in selectedFiles and showDeselectedFiles:
+            fg, bg = termbox.BLACK, termbox.WHITE
+        elif mode == NORMAL and f == files[selected]:
+            fg, bg = termbox.BLACK, termbox.WHITE
+        else:
+            fg, bg = termbox.WHITE, 0
+        if showDeselectedFiles or f in selectedFiles or selectedFiles == []:
+            if os.path.isdir(f):
+                f = f + '/'
+            writeText(t, 0, y, f, fg, bg)
+            y += 1 # }}}
 def mod(i, files):# {{{
     if i >= len(files):
         i = 0
