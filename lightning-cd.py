@@ -15,7 +15,7 @@ def getCharRange():# {{{
     "Get a string of the characters that are valid to enter in search mode"
     chars = ''
     for i in range(255):
-        if i >= ord('a') and i <= ord('z'):
+        if (i >= ord('a') and i <= ord('z')) or (i >= ord('0') and i <= ord('9')):
             chars = chars + chr(i)
     chars = chars + '.'
     return chars
@@ -131,11 +131,11 @@ try:# {{{
         elif keycode == termbox.KEY_ESC:
             break
         elif mode == NORMAL:
-            if keycode == termbox.KEY_ARROW_UP or letter == 'k':
+            if letter == 'k':
                 selected = selected - 1 % len(files)
-            elif keycode == termbox.KEY_ARROW_DOWN or letter == 'j':
+            elif letter == 'j':
                 selected = selected + 1 % len(files)
-            elif keycode == termbox.KEY_ENTER:
+            elif letter == '\'':
                 mode, selected, selectedFiles, searchBuffer = action(files[selected], originalPath)
             elif letter == 'q':
                 break
@@ -153,10 +153,10 @@ try:# {{{
             if letter:
                 if letter in getCharRange():
                     searchBuffer = searchBuffer + letter
+                elif letter == '-':
+                    searchBuffer = searchBuffer[:-1]
             if keycode == termbox.KEY_ENTER:
                 mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], originalPath)
-            elif keycode == termbox.KEY_BACKSPACE2:
-                searchBuffer = searchBuffer[:-1]
 
     t.close()
     print originalPath# }}}
