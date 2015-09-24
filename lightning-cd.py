@@ -7,10 +7,12 @@ import os
 showDeselectedFiles = False
 
 def writeText(t, x, y, text, fg, bg):# {{{
+    "Execute a series of change_cell's in a sequential manner such as to write a line of text"
     for i in range(len(text)):
         t.change_cell(x + i, y, ord(text[i]), fg, bg)
 # }}}
 def getCharRange():# {{{
+    "Get a string of the characters that are valid to enter in search mode"
     chars = ''
     for i in range(255):
         if i >= ord('a') and i <= ord('z'):
@@ -19,6 +21,7 @@ def getCharRange():# {{{
     return chars
 # }}}
 def filenameClean(filename):# {{{
+    "Convert a raw filename to a simplified one that can be searched for"
     newFilename = ''
     filename = filename.lower()
     acceptableChars = getCharRange()
@@ -28,17 +31,15 @@ def filenameClean(filename):# {{{
     return newFilename
 # }}}
 def selectFilesOnsearchBuffer(files, searchBuffer):# {{{
+    "Return a list of selected files by comparing simplified filenames with the search buffer"
     selected = []
     for f in files:
         if searchBuffer == filenameClean(f)[:len(searchBuffer)]:
             selected.append(f)
     return selected
 # }}}
-def getFileIndex(f, files):# {{{
-    for i in range(len(files)):
-        if f == files[i]:
-            return i# }}}
 def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
+    "Draw the list of selected files onto the screen"
     y = ystart
     for f in files:
         if y == yend:
@@ -54,24 +55,12 @@ def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
                 f = f + '/'
             writeText(t, 0, y, f, fg, bg)
             y += 1 # }}}
-def mod(i, files):# {{{
-    if i >= len(files):
-        i = 0
-    elif i < 0:
-        i = len(files) - 1
-    return i
-# }}}
-def relativeSelect(f, relative):# {{{
-    index = getFileIndex(files, f)
-    index += relative
-    index = mod(index, files)
-    return [files[index]]
-# }}}
 def switchMode(prevMode, selected, selectedFiles):# {{{
+    "Switch the mode to either search or normal and do associated setup for each mode"
     if prevMode == SEARCH:
         selected = 0
         if len(selectedFiles):
-            selected = getFileIndex(selectedFiles[0], files)
+            selected = files.index(selectedFiles[0])
         newMode = NORMAL
     else:
         newMode = SEARCH
@@ -80,6 +69,7 @@ def switchMode(prevMode, selected, selectedFiles):# {{{
     return (newMode, selected, searchBuffer, selectedFiles)
 # }}}
 def action(f, originalPath):# {{{
+    "Do something with a filename that the user selected"
     if os.path.isdir(f):
         os.chdir(f)
         selected = 0
@@ -91,6 +81,7 @@ def action(f, originalPath):# {{{
         command(originalPath, 'nvim ' + f)
 # }}}
 def command(path, command):# {{{
+    "Close lightning, print the current path, and execute the command"
     t.close()
     print path
     os.system(command)
@@ -123,7 +114,7 @@ try:# {{{
         drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
         if mode == SEARCH:
             if len(selectedFiles) == 1 and len(searchBuffer):
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], originalPath)
+                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], os.path.realpath('.'))
                 continue
             writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
         writeText(t, 0, 0, os.path.realpath('.'), termbox.WHITE, 0)
@@ -141,9 +132,9 @@ try:# {{{
             break
         elif mode == NORMAL:
             if keycode == termbox.KEY_ARROW_UP or letter == 'k':
-                selected = mod(selected - 1, files)
+                selected = selected - 1 % len(files)
             elif keycode == termbox.KEY_ARROW_DOWN or letter == 'j':
-                selected = mod(selected + 1, files)
+                selected = selected + 1 % len(files)
             elif keycode == termbox.KEY_ENTER:
                 mode, selected, selectedFiles, searchBuffer = action(files[selected], originalPath)
             elif letter == 'q':
