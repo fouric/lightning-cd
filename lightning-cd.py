@@ -166,7 +166,7 @@ except Exception, e:# {{{
     f.write(traceback.format_exc() + '\n')
     f.close()
     try:
-        tbox.close()
+        t.close()
     except:
         pass
     print traceback.format_exc()# }}}
