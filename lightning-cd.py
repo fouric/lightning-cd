@@ -40,20 +40,25 @@ def selectFilesOnsearchBuffer(files, searchBuffer):# {{{
 # }}}
 def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
     "Draw the list of selected files onto the screen"
+    x = 0
+    width = 2
     y = ystart
     for f in files:
         if y == yend:
-            break
-        elif mode == SEARCH and f in selectedFiles and showDeselectedFiles:
+            y = ystart
+            x += width
+            width = 1
+        if mode == SEARCH and f in selectedFiles and showDeselectedFiles:
             fg, bg = termbox.BLACK, termbox.WHITE
         elif mode == NORMAL and f == files[selected]:
             fg, bg = termbox.BLACK, termbox.WHITE
         else:
             fg, bg = termbox.WHITE, 0
         if showDeselectedFiles or f in selectedFiles or selectedFiles == []:
+            width = max(width, len(f) + 2)
             if os.path.isdir(f):
                 f = f + '/'
-            writeText(t, 0, y, f, fg, bg)
+            writeText(t, x, y, f, fg, bg)
             y += 1 # }}}
 def switchMode(prevMode, selected, selectedFiles):# {{{
     "Switch the mode to either search or normal and do associated setup for each mode"
@@ -117,7 +122,12 @@ try:# {{{
                 mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], os.path.realpath('.'))
                 continue
             writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
-        writeText(t, 0, 0, os.path.realpath('.'), termbox.WHITE, 0)
+        if mode == SEARCH:
+            modeText = "search"
+        elif mode == NORMAL:
+            modeText = "normal"
+        writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
+        writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
         t.present()
 
         event = t.poll_event()
