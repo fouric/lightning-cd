@@ -10,11 +10,9 @@ Termbox (https://github.com/nsf/termbox)
 Installation
 ------------
 
-Merely copy lightning.py to someplace convenient and add an alias to it, like so.  Lightning returns a directory after most commands, so an alias such as
+Merely copy lightning.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
 
-alias li='cd `python ~/code/lightning-cd/lightning-cd.py`'
-
-will allow you to jump into directories in addition to editing files.
+alias li='python ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd `cat ~/.lightningpath`'
 
 Usage
 -----
@@ -25,18 +23,18 @@ Common keybindings:
  - Escape quits Lightning
  - Comma moves up one directory, preserving the current mode
  - Space toggles the mode between search and normal
+ - Semicolon quits Lightning, changing to the current directory
 
 Search keybindings:
  - Letters are converted to lowercase, and along with period are valid search characters
  - Enter opens the first file that matches the search buffer
- - \- removes a character from the search buffer
+ - Dash removes a character from the search buffer
 
 Normal keybindings:
  - j and k move down and up, respectively
  - q quits
  - ' "does the right thing" on the current selection
  - v uses Neovim to open the current selection
- - h ("here") prints out the current path and quits Lightning
  - n opens Nautilus at the current location and quits Lightning
  - t opens prints out Lightning's initial directory, opens tmux at the current location, and quits Lightning
  - T opens prints out Lightning's current directory, opens tmux at the current location, and quits Lightning
