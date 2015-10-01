@@ -12,7 +12,7 @@ Installation
 
 Merely copy lightning.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
 
-alias li='python ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd `cat ~/.lightningpath`'
+alias li='python ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd \`cat ~/.lightningpath\`'
 
 Usage
 -----
