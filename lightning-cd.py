@@ -5,6 +5,10 @@ import termbox
 import os
 
 showDeselectedFiles = False
+NORMAL, SEARCH = 0, 1
+defaultMode = SEARCH
+editor = 'nvim'
+lightningPathFile = os.sys.argv[1]
 
 def writeText(t, x, y, text, fg, bg):# {{{
     "Execute a series of change_cell's in a sequential manner such as to write a line of text"
@@ -38,26 +42,34 @@ def selectFilesOnsearchBuffer(files, searchBuffer):# {{{
             selected.append(f)
     return selected
 # }}}
+def getFileColors(mode, selectedFiles, thisFile, fileList):# {{{
+    if mode == SEARCH and thisFile in selectedFiles and showDeselectedFiles:
+        fg, bg = termbox.BLACK, termbox.WHITE
+    elif mode == NORMAL and thisFile == fileList[selected]:
+        fg, bg = termbox.BLACK, termbox.WHITE
+    else:
+        fg, bg = termbox.WHITE, 0
+    return (fg, bg)# }}}
+def showThisFile(thisFile, selectedFiles):# {{{
+    return showDeselectedFiles or thisFile in selectedFiles or selectedFiles == []# }}}
+
 def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
     "Draw the list of selected files onto the screen"
     x = 0
-    width = 2
+    width = 1
     y = ystart
     for f in files:
+        # if we've reached the end of a column then begin at the top of the next one
         if y == yend:
             y = ystart
             x += width
             width = 1
-        if mode == SEARCH and f in selectedFiles and showDeselectedFiles:
-            fg, bg = termbox.BLACK, termbox.WHITE
-        elif mode == NORMAL and f == files[selected]:
-            fg, bg = termbox.BLACK, termbox.WHITE
-        else:
-            fg, bg = termbox.WHITE, 0
-        if showDeselectedFiles or f in selectedFiles or selectedFiles == []:
-            width = max(width, len(f) + 2)
+        # get the foreground and background colors for a particular filename
+        fg, bg = getFileColors(mode, selectedFiles, f, files)
+        if showThisFile(f, selectedFiles):
             if os.path.isdir(f):
                 f = f + '/'
+            width = max(width, len(f) + 1)
             writeText(t, x, y, f, fg, bg)
             y += 1 # }}}
 def switchMode(prevMode, selected, selectedFiles):# {{{
@@ -83,19 +95,19 @@ def action(f, originalPath):# {{{
         searchBuffer = ''
         return (mode, selected, selectedFiles, searchBuffer)
     elif os.path.isfile(f):
-        command(originalPath, 'nvim ' + f)
+        command(originalPath, editor + ' ' + f)
 # }}}
 def command(path, command):# {{{
     "Close lightning, print the current path, and execute the command"
     t.close()
-    print path
+    f = open(lightningPathFile, 'w+')
+    f.write(path)
+    f.close()
     os.system(command)
     quit()# }}}
 
 try:# {{{
     originalPath = os.path.realpath('.')
-    NORMAL, SEARCH = 0, 1
-    defaultMode = SEARCH
     mode = defaultMode
     selectedFiles = []
     searchBuffer = ''
@@ -140,6 +152,8 @@ try:# {{{
             mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
         elif keycode == termbox.KEY_ESC:
             break
+        elif letter == ';':
+            command(os.path.realpath('.'), 'true')
         elif mode == NORMAL:
             if letter == 'k':
                 selected = selected - 1 % len(files)
@@ -150,9 +164,7 @@ try:# {{{
             elif letter == 'q':
                 break
             elif letter == 'v':
-                command(originalPath, 'nvim ' + files[selected])
-            elif letter == 'h':
-                command(os.path.realpath('.'), 'true')
+                command(originalPath, editor + ' ' + files[selected])
             elif letter == 'n':
                 command(originalPath, 'nautilus ' + os.path.realpath('.') + ' > /dev/null 2>&1')
             elif letter == 't':
