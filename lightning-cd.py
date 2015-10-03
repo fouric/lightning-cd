@@ -52,6 +52,10 @@ def getFileColors(mode, selectedFiles, thisFile, fileList):# {{{
     return (fg, bg)# }}}
 def showThisFile(thisFile, selectedFiles):# {{{
     return showDeselectedFiles or thisFile in selectedFiles or selectedFiles == []# }}}
+def writePath(filename, path):# {{{
+    f = open(filename, 'w+')
+    f.write(path)
+    f.close()# }}}
 
 def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
     "Draw the list of selected files onto the screen"
@@ -85,7 +89,7 @@ def switchMode(prevMode, selected, selectedFiles):# {{{
     selectedFiles = []
     return (newMode, selected, searchBuffer, selectedFiles)
 # }}}
-def action(f, originalPath):# {{{
+def action(f, path):# {{{
     "Do something with a filename that the user selected"
     if os.path.isdir(f):
         os.chdir(f)
@@ -95,24 +99,22 @@ def action(f, originalPath):# {{{
         searchBuffer = ''
         return (mode, selected, selectedFiles, searchBuffer)
     elif os.path.isfile(f):
-        command(originalPath, editor + ' ' + f)
+        command(path, editor + ' ' + f)
 # }}}
 def command(path, command):# {{{
-    "Close lightning, print the current path, and execute the command"
+    "Close lightning, write the current path, and execute the command"
     t.close()
-    f = open(lightningPathFile, 'w+')
-    f.write(path)
-    f.close()
+    writePath(lightningPathFile, path)
     os.system(command)
     quit()# }}}
 
 try:# {{{
-    originalPath = os.path.realpath('.')
     mode = defaultMode
     selectedFiles = []
     searchBuffer = ''
     selected = 0
     files = []
+    charRange = getCharRange()
 
     t = termbox.Termbox()
     while True:
@@ -160,28 +162,28 @@ try:# {{{
             elif letter == 'j':
                 selected = selected + 1 % len(files)
             elif letter == '\'':
-                mode, selected, selectedFiles, searchBuffer = action(files[selected], originalPath)
+                mode, selected, selectedFiles, searchBuffer = action(files[selected], os.path.realpath('.'))
             elif letter == 'q':
                 break
             elif letter == 'v':
-                command(originalPath, editor + ' ' + files[selected])
+                command(os.path.realpath('.'), editor + ' ' + files[selected])
             elif letter == 'n':
-                command(originalPath, 'nautilus ' + os.path.realpath('.') + ' > /dev/null 2>&1')
+                command(os.path.realpath('.'), 'nautilus ' + os.path.realpath('.') + ' > /dev/null 2>&1')
             elif letter == 't':
-                command(originalPath, 'tmux > /dev/null')
+                command(os.path.realpath('.'), 'tmux > /dev/null')
             elif letter == 'T':
                 command(os.path.realpath('.'), 'tmux > /dev/null')
         elif mode == SEARCH:
             if letter:
-                if letter in getCharRange():
+                if letter in charRange:
                     searchBuffer = searchBuffer + letter
                 elif letter == '-':
                     searchBuffer = searchBuffer[:-1]
             if keycode == termbox.KEY_ENTER:
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], originalPath)
+                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], os.path.realpath('.'))
 
     t.close()
-    print originalPath# }}}
+    print os.path.realpath('.')# }}}
 except Exception, e:# {{{
     #f = open('~/lightning-cd-error.txt', 'w')
     f = open('error.txt', 'w')
