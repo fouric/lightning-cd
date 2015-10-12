@@ -172,9 +172,9 @@ if __name__ == '__main__':
                 mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
             elif mode == Mode.NORMAL:
                 if letter == keybindings.KEY_UP:
-                    selected = selected - 1 % len(files)
+                    selected = (selected - 1) % len(files)
                 elif letter == keybindings.KEY_DOWN:
-                    selected = selected + 1 % len(files)
+                    selected = (selected + 1) % len(files)
                 elif letter == keybindings.KEY_EDITOR:
                     runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
                 elif letter == keybindings.KEY_FILE_BROWSER:
