@@ -91,20 +91,22 @@ def switchMode(prevMode, selected, selectedFiles):# {{{
     selectedFiles = []
     return (newMode, selected, searchBuffer, selectedFiles)
 # }}}
-def action(f, path):# {{{
+def takeActionOnPath(f, path):# {{{
     "Do something with a filename that the user selected"
     if os.path.isdir(f):
         os.chdir(f)
         selected = 0
         if not persistentMode:
-            mode = defaultMode
+            newMode = defaultMode
+        else:
+            newMode = mode
         selectedFiles = []
         searchBuffer = ''
-        return (mode, selected, selectedFiles, searchBuffer)
+        return (newMode, selected, selectedFiles, searchBuffer)
     elif os.path.isfile(f):
-        command(path, editor + ' ' + f)
+        runCommandOnFile(path, editor + ' ' + f)
 # }}}
-def command(path, command):# {{{
+def runCommandOnFile(path, command):# {{{
     "Close lightning, write the current path, and execute the command"
     t.close()
     writePath(lightningPathFile, path)
@@ -136,7 +138,7 @@ try:# {{{
         drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
         if mode == SEARCH:
             if len(selectedFiles) == 1 and len(searchBuffer):
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], os.path.realpath('.'))
+                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(selectedFiles[0], os.path.realpath('.'))
                 continue
             writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
         if mode == SEARCH:
@@ -159,20 +161,20 @@ try:# {{{
             selectedFiles = []
             selected = 0
         elif letter == ';':
-            command(os.path.realpath('.'), 'true')
+            runCommandOnFile(os.path.realpath('.'), 'true')
         elif letter == '\'':
-            mode, selected, selectedFiles, searchBuffer = action(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
+            mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
         elif mode == NORMAL:
             if letter == 'k':
                 selected = selected - 1 % len(files)
             elif letter == 'j':
                 selected = selected + 1 % len(files)
             elif letter == 'v':
-                command(os.path.realpath('.'), editor + ' ' + files[selected])
+                runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
             elif letter == 'f':
-                command(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
+                runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
             elif letter == 't':
-                command(os.path.realpath('.'), 'tmux > /dev/null')
+                runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
         elif mode == SEARCH:
             if letter:
                 if letter in charRange:
