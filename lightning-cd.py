@@ -3,11 +3,13 @@
 import traceback
 import termbox
 import os
+from settings import *
+import keybindings
 
 
 showDeselectedFiles = False
-NORMAL, SEARCH = 0, 1
-defaultMode = SEARCH
+Mode = Enum('Mode', 'NORMAL SEARCH')
+defaultMode = Mode.SEARCH
 editor = 'nvim'
 fileBrowser = 'nautilus'
 persistentMode = True
@@ -46,9 +48,9 @@ def selectFilesOnsearchBuffer(files, searchBuffer):
     return selected
 
 def getFileColors(mode, selectedFiles, thisFile, fileList):
-    if mode == SEARCH and thisFile in selectedFiles and showDeselectedFiles:
+    if mode == Mode.SEARCH and thisFile in selectedFiles and showDeselectedFiles:
         fg, bg = termbox.BLACK, termbox.WHITE
-    elif mode == NORMAL and thisFile == fileList[selected]:
+    elif mode == Mode.NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
     else:
         fg, bg = termbox.WHITE, 0
@@ -84,13 +86,13 @@ def drawFileList(t, ystart, yend, mode, selected, selectedFiles):
 
 def switchMode(prevMode, selected, selectedFiles):
     "Switch the mode to either search or normal and do associated setup for each mode"
-    if prevMode == SEARCH:
+    if prevMode == Mode.SEARCH:
         selected = 0
         if len(selectedFiles):
             selected = files.index(selectedFiles[0])
-        newMode = NORMAL
+        newMode = Mode.NORMAL
     else:
-        newMode = SEARCH
+        newMode = Mode.SEARCH
     searchBuffer = ''
     selectedFiles = []
     return (newMode, selected, searchBuffer, selectedFiles)
@@ -138,17 +140,17 @@ if __name__ == '__main__':
                 else:
                     normalfiles.append(f)
             files = normalfiles + dotfiles
-            if mode == SEARCH:
+            if mode == Mode.SEARCH:
                 selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
             drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
-            if mode == SEARCH:
+            if mode == Mode.SEARCH:
                 if len(selectedFiles) == 1 and len(searchBuffer):
                     mode, selected, selectedFiles, searchBuffer = takeActionOnPath(selectedFiles[0], os.path.realpath('.'))
                     continue
                 writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
-            if mode == SEARCH:
+            if mode == Mode.SEARCH:
                 modeText = "search"
-            elif mode == NORMAL:
+            elif mode == Mode.NORMAL:
                 modeText = "normal"
             writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
             writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
@@ -157,33 +159,33 @@ if __name__ == '__main__':
             letter, keycode = event[1], event[2]
             if keycode == termbox.KEY_SPACE:
                 mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
-            elif letter == ',':
+            elif letter == keybindings.KEY_UP_DIR:
                 os.chdir('..')
                 searchBuffer = ''
                 if not persistentMode:
                     mode = defaultMode
                 selectedFiles = []
                 selected = 0
-            elif letter == ';':
+            elif letter == keybindings.KEY_QUIT:
                 runCommandOnFile(os.path.realpath('.'), 'true')
-            elif letter == '\'':
-                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
-            elif mode == NORMAL:
-                if letter == 'k':
+            elif letter == keybindings.KEY_SMART:
+                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
+            elif mode == Mode.NORMAL:
+                if letter == keybindings.KEY_UP:
                     selected = selected - 1 % len(files)
-                elif letter == 'j':
+                elif letter == keybindings.KEY_DOWN:
                     selected = selected + 1 % len(files)
-                elif letter == 'v':
+                elif letter == keybindings.KEY_EDITOR:
                     runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
-                elif letter == 'f':
+                elif letter == keybindings.KEY_FILE_BROWSER:
                     runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
-                elif letter == 't':
+                elif letter == keybindings.KEY_TMUX:
                     runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
-            elif mode == SEARCH:
+            elif mode == Mode.SEARCH:
                 if letter:
                     if letter in charRange:
                         searchBuffer = searchBuffer + letter
-                    elif letter == '-':
+                    elif letter == keybindings.KEY_DELETE:
                         searchBuffer = searchBuffer[:-1]
         t.close()
         print os.path.realpath('.')
