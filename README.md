@@ -5,12 +5,13 @@ lightning-cd (or, more colloquially, Lightning) is a file browser and text edito
 Dependencies
 -----------
 
-Termbox (https://github.com/nsf/termbox)
+Termbox (https://github.com/nsf/termbox) with Python bindings installed
+A relatively recent version of Python 2
 
 Installation
 ------------
 
-Merely copy lightning.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
+Merely copy lightning-cd.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
 
 alias li='python ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
 
@@ -20,10 +21,10 @@ Usage
 Lightning is an interactive, modal tool with letter keybindings very similar to vim.  It contains two modes, search and normal.  Normal mode allows you to select a file by moving up and down through a list.  Search mode, the default, takes letters that you type, filters them, and then uses them to open a file once the search buffer contains enough to uniquely identify a file.
 
 Common keybindings:
- - Escape quits Lightning
- - Comma moves up one directory, preserving the current mode
+ - Comma moves up one directory
  - Space toggles the mode between search and normal
- - Semicolon quits Lightning, changing to the current directory
+ - Semicolon quits Lightning
+ - Single quote "does the right thing" on either the selected file or the first matching file
 
 Search keybindings:
  - Letters are converted to lowercase, and along with period are valid search characters
@@ -32,12 +33,9 @@ Search keybindings:
 
 Normal keybindings:
  - j and k move down and up, respectively
- - q quits
- - ' "does the right thing" on the current selection
- - v uses Neovim to open the current selection
- - n opens Nautilus at the current location and quits Lightning
- - t opens prints out Lightning's initial directory, opens tmux at the current location, and quits Lightning
- - T opens prints out Lightning's current directory, opens tmux at the current location, and quits Lightning
+ - v opens the currently selected file with your text editor (NeoVim by default)
+ - f opens the current directory with your file browser (Nautilus by default)
+ - t opens Tmux at the current directory
 
 Disclaimer
 ---------
