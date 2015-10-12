@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/Brendan/Desktop/lightning-cd/lightning-cd.py", line 145, in <module>
-    drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
-  File "/Users/Brendan/Desktop/lightning-cd/lightning-cd.py", line 79, in drawFileList
-    fg, bg = getFileColors(mode, selectedFiles, f, files)
-  File "/Users/Brendan/Desktop/lightning-cd/lightning-cd.py", line 53, in getFileColors
-    elif mode == Mode.NORMAL and thisFile == fileList[selected]:
-IndexError: list index out of range
-
