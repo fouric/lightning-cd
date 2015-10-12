@@ -8,6 +8,8 @@ showDeselectedFiles = False
 NORMAL, SEARCH = 0, 1
 defaultMode = SEARCH
 editor = 'nvim'
+fileBrowser = 'nautilus'
+persistentMode = True
 lightningPathFile = os.sys.argv[1]
 
 def writeText(t, x, y, text, fg, bg):# {{{
@@ -94,7 +96,8 @@ def action(f, path):# {{{
     if os.path.isdir(f):
         os.chdir(f)
         selected = 0
-        mode = defaultMode
+        if not persistentMode:
+            mode = defaultMode
         selectedFiles = []
         searchBuffer = ''
         return (mode, selected, selectedFiles, searchBuffer)
@@ -146,32 +149,29 @@ try:# {{{
 
         event = t.poll_event()
         letter, keycode = event[1], event[2]
-        if letter == ',':
+        if keycode == termbox.KEY_SPACE:
+            mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
+        elif letter == ',':
             os.chdir('..')
             searchBuffer = ''
+            if not persistentMode:
+                mode = defaultMode
+            selectedFiles = []
             selected = 0
-        elif keycode == termbox.KEY_SPACE:
-            mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
-        elif keycode == termbox.KEY_ESC:
-            break
         elif letter == ';':
             command(os.path.realpath('.'), 'true')
+        elif letter == '\'':
+            mode, selected, selectedFiles, searchBuffer = action(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
         elif mode == NORMAL:
             if letter == 'k':
                 selected = selected - 1 % len(files)
             elif letter == 'j':
                 selected = selected + 1 % len(files)
-            elif letter == '\'':
-                mode, selected, selectedFiles, searchBuffer = action(files[selected], os.path.realpath('.'))
-            elif letter == 'q':
-                break
             elif letter == 'v':
                 command(os.path.realpath('.'), editor + ' ' + files[selected])
-            elif letter == 'n':
-                command(os.path.realpath('.'), 'nautilus ' + os.path.realpath('.') + ' > /dev/null 2>&1')
+            elif letter == 'f':
+                command(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
             elif letter == 't':
-                command(os.path.realpath('.'), 'tmux > /dev/null')
-            elif letter == 'T':
                 command(os.path.realpath('.'), 'tmux > /dev/null')
         elif mode == SEARCH:
             if letter:
@@ -179,8 +179,6 @@ try:# {{{
                     searchBuffer = searchBuffer + letter
                 elif letter == '-':
                     searchBuffer = searchBuffer[:-1]
-            if keycode == termbox.KEY_ENTER:
-                mode, selected, selectedFiles, searchBuffer = action(selectedFiles[0], os.path.realpath('.'))
 
     t.close()
     print os.path.realpath('.')# }}}
