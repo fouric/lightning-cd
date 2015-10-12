@@ -185,8 +185,8 @@ if __name__ == '__main__':
                 if letter:
                     if letter in charRange:
                         searchBuffer = searchBuffer + letter
-                    elif letter == keybindings.KEY_DELETE:
-                        searchBuffer = searchBuffer[:-1]
+                elif keycode == 127: # DELETE
+                    searchBuffer = searchBuffer[:-1]
         t.close()
         print os.path.realpath('.')
     except Exception, e:
