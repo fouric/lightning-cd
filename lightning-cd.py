@@ -4,6 +4,7 @@ import traceback
 import termbox
 import os
 
+
 showDeselectedFiles = False
 NORMAL, SEARCH = 0, 1
 defaultMode = SEARCH
@@ -12,12 +13,12 @@ fileBrowser = 'nautilus'
 persistentMode = True
 lightningPathFile = os.sys.argv[1]
 
-def writeText(t, x, y, text, fg, bg):# {{{
+def writeText(t, x, y, text, fg, bg):
     "Execute a series of change_cell's in a sequential manner such as to write a line of text"
     for i in range(len(text)):
         t.change_cell(x + i, y, ord(text[i]), fg, bg)
-# }}}
-def getCharRange():# {{{
+
+def getCharRange():
     "Get a string of the characters that are valid to enter in search mode"
     chars = ''
     for i in range(255):
@@ -25,8 +26,8 @@ def getCharRange():# {{{
             chars = chars + chr(i)
     chars = chars + '.'
     return chars
-# }}}
-def filenameClean(filename):# {{{
+
+def filenameClean(filename):
     "Convert a raw filename to a simplified one that can be searched for"
     newFilename = ''
     filename = filename.lower()
@@ -35,31 +36,33 @@ def filenameClean(filename):# {{{
         if char in acceptableChars:
             newFilename = newFilename + char
     return newFilename
-# }}}
-def selectFilesOnsearchBuffer(files, searchBuffer):# {{{
+
+def selectFilesOnsearchBuffer(files, searchBuffer):
     "Return a list of selected files by comparing simplified filenames with the search buffer"
     selected = []
     for f in files:
         if searchBuffer == filenameClean(f)[:len(searchBuffer)]:
             selected.append(f)
     return selected
-# }}}
-def getFileColors(mode, selectedFiles, thisFile, fileList):# {{{
+
+def getFileColors(mode, selectedFiles, thisFile, fileList):
     if mode == SEARCH and thisFile in selectedFiles and showDeselectedFiles:
         fg, bg = termbox.BLACK, termbox.WHITE
     elif mode == NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
     else:
         fg, bg = termbox.WHITE, 0
-    return (fg, bg)# }}}
-def showThisFile(thisFile, selectedFiles):# {{{
-    return showDeselectedFiles or thisFile in selectedFiles or selectedFiles == []# }}}
-def writePath(filename, path):# {{{
+    return (fg, bg)
+
+def showThisFile(thisFile, selectedFiles):
+    return showDeselectedFiles or thisFile in selectedFiles or selectedFiles == []
+
+def writePath(filename, path):
     f = open(filename, 'w+')
     f.write(path)
-    f.close()# }}}
+    f.close()
 
-def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
+def drawFileList(t, ystart, yend, mode, selected, selectedFiles):
     "Draw the list of selected files onto the screen"
     x = 0
     width = 1
@@ -77,8 +80,9 @@ def drawFileList(t, ystart, yend, mode, selected, selectedFiles):# {{{
                 f = f + '/'
             width = max(width, len(f) + 1)
             writeText(t, x, y, f, fg, bg)
-            y += 1 # }}}
-def switchMode(prevMode, selected, selectedFiles):# {{{
+            y += 1
+
+def switchMode(prevMode, selected, selectedFiles):
     "Switch the mode to either search or normal and do associated setup for each mode"
     if prevMode == SEARCH:
         selected = 0
@@ -90,8 +94,8 @@ def switchMode(prevMode, selected, selectedFiles):# {{{
     searchBuffer = ''
     selectedFiles = []
     return (newMode, selected, searchBuffer, selectedFiles)
-# }}}
-def takeActionOnPath(f, path):# {{{
+
+def takeActionOnPath(f, path):
     "Do something with a filename that the user selected"
     if os.path.isdir(f):
         os.chdir(f)
@@ -105,92 +109,90 @@ def takeActionOnPath(f, path):# {{{
         return (newMode, selected, selectedFiles, searchBuffer)
     elif os.path.isfile(f):
         runCommandOnFile(path, editor + ' ' + f)
-# }}}
-def runCommandOnFile(path, command):# {{{
+
+def runCommandOnFile(path, command):
     "Close lightning, write the current path, and execute the command"
     t.close()
     writePath(lightningPathFile, path)
     os.system(command)
-    quit()# }}}
+    quit()
 
-try:# {{{
-    mode = defaultMode
-    selectedFiles = []
-    searchBuffer = ''
-    selected = 0
-    files = []
-    charRange = getCharRange()
-
-    t = termbox.Termbox()
-    while True:
-        t.clear()
-        files = sorted(os.listdir('.'))
-        normalfiles = []
-        dotfiles = []
-        for f in files:
-            if f[0] == '.':
-                dotfiles.append(f)
-            else:
-                normalfiles.append(f)
-        files = normalfiles + dotfiles
-        if mode == SEARCH:
-            selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
-        drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
-        if mode == SEARCH:
-            if len(selectedFiles) == 1 and len(searchBuffer):
-                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(selectedFiles[0], os.path.realpath('.'))
-                continue
-            writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
-        if mode == SEARCH:
-            modeText = "search"
-        elif mode == NORMAL:
-            modeText = "normal"
-        writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
-        writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
-        t.present()
-
-        event = t.poll_event()
-        letter, keycode = event[1], event[2]
-        if keycode == termbox.KEY_SPACE:
-            mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
-        elif letter == ',':
-            os.chdir('..')
-            searchBuffer = ''
-            if not persistentMode:
-                mode = defaultMode
-            selectedFiles = []
-            selected = 0
-        elif letter == ';':
-            runCommandOnFile(os.path.realpath('.'), 'true')
-        elif letter == '\'':
-            mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
-        elif mode == NORMAL:
-            if letter == 'k':
-                selected = selected - 1 % len(files)
-            elif letter == 'j':
-                selected = selected + 1 % len(files)
-            elif letter == 'v':
-                runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
-            elif letter == 'f':
-                runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
-            elif letter == 't':
-                runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
-        elif mode == SEARCH:
-            if letter:
-                if letter in charRange:
-                    searchBuffer = searchBuffer + letter
-                elif letter == '-':
-                    searchBuffer = searchBuffer[:-1]
-
-    t.close()
-    print os.path.realpath('.')# }}}
-except Exception, e:# {{{
-    #f = open('~/lightning-cd-error.txt', 'w')
-    f = open('error.txt', 'w')
-    f.write(traceback.format_exc() + '\n')
-    f.close()
+if __name__ == '__main__':
     try:
+        mode = defaultMode
+        selectedFiles = []
+        searchBuffer = ''
+        selected = 0
+        files = []
+        charRange = getCharRange()
+        t = termbox.Termbox()
+
+        while True:
+            t.clear()
+            files = sorted(os.listdir('.'))
+            normalfiles = []
+            dotfiles = []
+            for f in files:
+                if f[0] == '.':
+                    dotfiles.append(f)
+                else:
+                    normalfiles.append(f)
+            files = normalfiles + dotfiles
+            if mode == SEARCH:
+                selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
+            drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
+            if mode == SEARCH:
+                if len(selectedFiles) == 1 and len(searchBuffer):
+                    mode, selected, selectedFiles, searchBuffer = takeActionOnPath(selectedFiles[0], os.path.realpath('.'))
+                    continue
+                writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
+            if mode == SEARCH:
+                modeText = "search"
+            elif mode == NORMAL:
+                modeText = "normal"
+            writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
+            writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
+            t.present()
+            event = t.poll_event()
+            letter, keycode = event[1], event[2]
+            if keycode == termbox.KEY_SPACE:
+                mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
+            elif letter == ',':
+                os.chdir('..')
+                searchBuffer = ''
+                if not persistentMode:
+                    mode = defaultMode
+                selectedFiles = []
+                selected = 0
+            elif letter == ';':
+                runCommandOnFile(os.path.realpath('.'), 'true')
+            elif letter == '\'':
+                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == SEARCH else selected], os.path.realpath('.'))
+            elif mode == NORMAL:
+                if letter == 'k':
+                    selected = selected - 1 % len(files)
+                elif letter == 'j':
+                    selected = selected + 1 % len(files)
+                elif letter == 'v':
+                    runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
+                elif letter == 'f':
+                    runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
+                elif letter == 't':
+                    runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
+            elif mode == SEARCH:
+                if letter:
+                    if letter in charRange:
+                        searchBuffer = searchBuffer + letter
+                    elif letter == '-':
+                        searchBuffer = searchBuffer[:-1]
         t.close()
-    except:
-        pass
-    print traceback.format_exc()# }}}
+        print os.path.realpath('.')
+    except Exception, e:
+        f = open('error.txt', 'w')
+        f.write(traceback.format_exc() + '\n')
+        f.close()
+        try:
+            t.close()
+        except:
+            pass
+        print traceback.format_exc()
