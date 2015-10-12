@@ -186,8 +186,6 @@ if __name__ == '__main__':
                         searchBuffer = searchBuffer + letter
                     elif letter == keybindings.KEY_DELETE:
                         searchBuffer = searchBuffer[:-1]
-                elif keycode == 127: # DELETE
-                    searchBuffer = searchBuffer[:-1]
 
         t.close()
     except Exception, e:
