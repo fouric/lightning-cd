@@ -1,12 +1,12 @@
 # lightning-cd
 
-lightning-cd (or, more colloquially, Lightning) is a file browser and text editor launcher designed to allow you to find and edit files as fast as physically possible.  It acts as a complement to autojump; if autojump is the O(1) scroll of town teleport in constant time, then Lightning is the O(n) blink in linear time.
+Lightning is a file browser and text editor launcher designed to allow you to find and edit files as fast as physically possible.  It acts as a complement to autojump; if autojump is the O(1) scroll of town teleport in constant time, then Lightning is the O(n) blink in linear time.
 
 Dependencies
 -----------
 
-Termbox (https://github.com/nsf/termbox) with Python bindings installed
-A relatively recent version of Python 2
+ - Termbox (https://github.com/nsf/termbox) with Python bindings installed
+ - A relatively recent version of Python 2
 
 Installation
 ------------
@@ -25,10 +25,10 @@ Common keybindings:
  - Space toggles the mode between search and normal
  - Semicolon quits Lightning
  - Single quote "does the right thing" on either the selected file or the first matching file
+ - Double quote refreshes the file list
 
 Search keybindings:
- - Letters are converted to lowercase, and along with period are valid search characters
- - Enter opens the first file that matches the search buffer
+ - Letters are converted to lowercase, and along with period and numbers are valid search characters
  - Dash removes a character from the search buffer
 
 Normal keybindings:
@@ -42,4 +42,4 @@ Disclaimer
 
 Lightning is ALPHA, very much buggy and non-feature-complete, and likely to change very quickly.  With that said, the basic idea (of finding and editing files as quickly as physically possible) will remain the same, and you are encouraged to try it out and give feedback.
 
-(it was also built for a Dvorak Simplified Keyboard user, so you may have to tweak it if you use QWERTY)
+(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak it if you use QWERTY)
