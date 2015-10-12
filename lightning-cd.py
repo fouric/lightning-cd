@@ -47,8 +47,8 @@ def selectFilesOnsearchBuffer(files, searchBuffer):
             selected.append(f)
     return selected
 
-def getFileColors(mode, selectedFiles, thisFile, fileList):
-    if mode == Mode.SEARCH and thisFile in selectedFiles and showDeselectedFiles:
+def getFileColors(mode, selected, thisFile, fileList):
+    if mode == Mode.SEARCH and thisFile in selected and showDeselectedFiles:
         fg, bg = termbox.BLACK, termbox.WHITE
     elif mode == Mode.NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
@@ -56,15 +56,18 @@ def getFileColors(mode, selectedFiles, thisFile, fileList):
         fg, bg = termbox.WHITE, 0
     return (fg, bg)
 
-def showThisFile(thisFile, selectedFiles):
-    return showDeselectedFiles or thisFile in selectedFiles or selectedFiles == []
+def showThisFile(thisFile, mode, selected):
+    return showDeselectedFiles or mode == Mode.NORMAL or thisFile in selected or selected == []
 
 def writePath(filename, path):
     f = open(filename, 'w+')
     f.write(path)
     f.close()
 
-def drawFileList(t, ystart, yend, mode, selected, selectedFiles):
+def selectedValueForMode(mode):
+    return [] if mode == Mode.SEARCH else 0
+
+def drawFileList(t, ystart, yend, mode, selected):
     "Draw the list of selected files onto the screen"
     x = 0
     width = 1
@@ -76,39 +79,33 @@ def drawFileList(t, ystart, yend, mode, selected, selectedFiles):
             x += width
             width = 1
         # get the foreground and background colors for a particular filename
-        fg, bg = getFileColors(mode, selectedFiles, f, files)
-        if showThisFile(f, selectedFiles):
+        fg, bg = getFileColors(mode, selected, f, files)
+        if showThisFile(f, mode, selected):
             if os.path.isdir(f):
                 f = f + '/'
             width = max(width, len(f) + 1)
             writeText(t, x, y, f, fg, bg)
             y += 1
 
-def switchMode(prevMode, selected, selectedFiles):
+def switchMode(prevMode, selected):
     "Switch the mode to either search or normal and do associated setup for each mode"
     if prevMode == Mode.SEARCH:
-        selected = 0
-        if len(selectedFiles):
-            selected = files.index(selectedFiles[0])
         newMode = Mode.NORMAL
+        selected = files.index(selected[0]) if len(selected) else 0
     else:
         newMode = Mode.SEARCH
+        selected = []
     searchBuffer = ''
-    selectedFiles = []
-    return (newMode, selected, searchBuffer, selectedFiles)
+    return (newMode, selected, searchBuffer)
 
 def takeActionOnPath(f, path):
     "Do something with a filename that the user selected"
     if os.path.isdir(f):
         os.chdir(f)
-        selected = 0
-        if not persistentMode:
-            newMode = defaultMode
-        else:
-            newMode = mode
-        selectedFiles = []
+        newMode = mode if persistentMode else defaultMode
+        selected = 0 if newMode == Mode.NORMAL else []
         searchBuffer = ''
-        return (newMode, selected, selectedFiles, searchBuffer)
+        return (newMode, selected, searchBuffer)
     elif os.path.isfile(f):
         runCommandOnFile(path, editor + ' ' + f)
 
@@ -122,16 +119,16 @@ def runCommandOnFile(path, command):
 if __name__ == '__main__':
     try:
         mode = defaultMode
-        selectedFiles = []
         searchBuffer = ''
-        selected = 0
-        files = []
+        selected = selectedValueForMode(mode)
+        files = None
         charRange = getCharRange()
-        t = termbox.Termbox()
 
+        t = termbox.Termbox()
         while True:
             t.clear()
-            files = sorted(os.listdir('.'))
+            if not files:
+                files = sorted(os.listdir('.'))
             normalfiles = []
             dotfiles = []
             for f in files:
@@ -141,35 +138,37 @@ if __name__ == '__main__':
                     normalfiles.append(f)
             files = normalfiles + dotfiles
             if mode == Mode.SEARCH:
-                selectedFiles = selectFilesOnsearchBuffer(files, searchBuffer)
-            drawFileList(t, 1, t.height() - 1, mode, selected, selectedFiles)
+                selected = selectFilesOnsearchBuffer(files, searchBuffer)
+            drawFileList(t, 1, t.height() - 1, mode, selected)
             if mode == Mode.SEARCH:
-                if len(selectedFiles) == 1 and len(searchBuffer):
-                    mode, selected, selectedFiles, searchBuffer = takeActionOnPath(selectedFiles[0], os.path.realpath('.'))
+                if len(selected) == 1 and len(searchBuffer):
+                    mode, selected, searchBuffer = takeActionOnPath(selected[0], os.path.realpath('.'))
+                    files = None
                     continue
                 writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
-            if mode == Mode.SEARCH:
-                modeText = "search"
-            elif mode == Mode.NORMAL:
-                modeText = "normal"
+            modeText = 'search' if mode == Mode.SEARCH else 'normal'
             writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
             writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
             t.present()
+
             event = t.poll_event()
             letter, keycode = event[1], event[2]
             if keycode == termbox.KEY_SPACE:
-                mode, selected, searchBuffer, selectedFiles = switchMode(mode, selected, selectedFiles)
+                mode, selected, searchBuffer = switchMode(mode, selected)
             elif letter == keybindings.KEY_UP_DIR:
                 os.chdir('..')
                 searchBuffer = ''
                 if not persistentMode:
                     mode = defaultMode
-                selectedFiles = []
-                selected = 0
+                selected = selectedValueForMode(mode)
+                files = None
             elif letter == keybindings.KEY_QUIT:
                 runCommandOnFile(os.path.realpath('.'), 'true')
             elif letter == keybindings.KEY_SMART:
-                mode, selected, selectedFiles, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
+                mode, selected, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
+                files = None
+            elif letter == '"':
+                files = None
             elif mode == Mode.NORMAL:
                 if letter == keybindings.KEY_UP:
                     selected = (selected - 1) % len(files)
@@ -187,14 +186,10 @@ if __name__ == '__main__':
                         searchBuffer = searchBuffer + letter
                 elif keycode == 127: # DELETE
                     searchBuffer = searchBuffer[:-1]
+
         t.close()
-        print os.path.realpath('.')
     except Exception, e:
+        #f = open('~/lightning-cd-error.txt', 'w')
         f = open('error.txt', 'w')
         f.write(traceback.format_exc() + '\n')
         f.close()
-        try:
-            t.close()
-        except:
-            pass
-        print traceback.format_exc()
