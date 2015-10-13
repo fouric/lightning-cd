@@ -47,7 +47,10 @@ def getFileColors(mode, selected, thisFile, fileList):
     elif mode == Mode.NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
     else:
-        fg, bg = termbox.WHITE, 0
+        if os.path.isdir(thisFile):
+            fg, bg = termbox.BLUE, 0
+        else:
+            fg, bg = termbox.WHITE, 0
     return (fg, bg)
 
 def showThisFile(thisFile, mode, selected):
