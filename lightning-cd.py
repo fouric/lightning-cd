@@ -185,7 +185,7 @@ if __name__ == '__main__':
                         searchBuffer = searchBuffer[:-1]
 
         t.close()
-    except Exception, e:
+    except Exception as e:
         #f = open('~/lightning-cd-error.txt', 'w')
         f = open('error.txt', 'w')
         f.write(traceback.format_exc() + '\n')

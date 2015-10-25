@@ -5,15 +5,15 @@ Lightning is a file browser and text editor launcher designed to allow you to fi
 Dependencies
 -----------
 
- - Termbox (https://github.com/nsf/termbox) with Python bindings installed
- - A relatively recent version of Python 2
+ - Termbox (https://github.com/nsf/termbox) with Python 3 bindings installed
+ - A relatively recent version of Python 3
 
 Installation
 ------------
 
 Merely copy lightning-cd.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
 
-alias li='python ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
+alias li='python3 ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
 
 Usage
 -----
