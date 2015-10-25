@@ -47,10 +47,7 @@ def getFileColors(mode, selected, thisFile, fileList):
     elif mode == Mode.NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
     else:
-        if os.path.isdir(thisFile):
-            fg, bg = termbox.BLUE, 0
-        else:
-            fg, bg = termbox.WHITE, 0
+        fg, bg = termbox.BLUE if os.path.isdir(thisFile) else termbox.WHITE, 0
     return (fg, bg)
 
 def showThisFile(thisFile, mode, selected):
@@ -126,14 +123,13 @@ if __name__ == '__main__':
             t.clear()
             if not files:
                 files = sorted(os.listdir('.'))
-            normalfiles = []
-            dotfiles = []
-            for f in files:
-                if f[0] == '.':
-                    dotfiles.append(f)
-                else:
-                    normalfiles.append(f)
-            files = normalfiles + dotfiles
+                normalfiles = []
+                dotfiles = []
+                for f in files:
+                    (dotfiles if f[0] == '.' else normalfiles).append(f)
+                files = normalfiles
+                if showHiddenFiles:
+                    files += dotfiles
             if mode == Mode.SEARCH:
                 selected = selectFilesOnsearchBuffer(files, searchBuffer)
             drawFileList(t, 1, t.height() - 1, mode, selected)
@@ -177,6 +173,9 @@ if __name__ == '__main__':
                     runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
                 elif letter == keybindings.KEY_TMUX:
                     runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
+                elif letter == keybindings.KEY_SWAP_HIDDEN:
+                    showHiddenFiles = not showHiddenFiles
+                    files = None
             elif mode == Mode.SEARCH:
                 if letter:
                     if letter in charRange:

@@ -36,6 +36,7 @@ Normal keybindings:
  - v opens the currently selected file with your text editor (NeoVim by default)
  - f opens the current directory with your file browser (Nautilus by default)
  - t opens Tmux at the current directory
+ - d toggles the visibility of "hidden" files (currently those whose filenames start with a dot)
 
 Disclaimer
 ---------
