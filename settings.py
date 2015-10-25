@@ -8,3 +8,4 @@ editor = 'nvim'
 fileBrowser = 'nautilus'
 persistentMode = True
 lightningPathFile = os.sys.argv[1]
+showHiddenFiles = False
