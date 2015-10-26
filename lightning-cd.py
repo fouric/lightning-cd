@@ -101,7 +101,7 @@ def takeActionOnPath(f, path):
         searchBuffer = ''
         return (newMode, selected, searchBuffer)
     elif os.path.isfile(f):
-        runCommandOnFile(path, editor + ' ' + f)
+        runCommandOnFile(path, editor + ' "' + f + '"')
 
 def runCommandOnFile(path, command):
     "Close lightning, write the current path, and execute the command"
@@ -168,9 +168,9 @@ if __name__ == '__main__':
                 elif letter == keybindings.KEY_DOWN:
                     selected = (selected + 1) % len(files)
                 elif letter == keybindings.KEY_EDITOR:
-                    runCommandOnFile(os.path.realpath('.'), editor + ' ' + files[selected])
+                    runCommandOnFile(os.path.realpath('.'), editor + ' "' + files[selected]) + '"'
                 elif letter == keybindings.KEY_FILE_BROWSER:
-                    runCommandOnFile(os.path.realpath('.'), fileBrowser + ' ' + os.path.realpath('.') + ' > /dev/null 2>&1')
+                    runCommandOnFile(os.path.realpath('.'), fileBrowser + ' "' + os.path.realpath('.') + '" > /dev/null 2>&1')
                 elif letter == keybindings.KEY_TMUX:
                     runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
                 elif letter == keybindings.KEY_SWAP_HIDDEN:
