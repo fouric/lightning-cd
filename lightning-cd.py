@@ -111,6 +111,12 @@ def runCommandOnFile(path, command):
     os.system(command)
     quit()
 
+def slicer(num):
+    "Returns a function that returns the first num characters of the given string"
+    def f(s):
+        return s[:num]
+    return f
+
 if __name__ == '__main__':
     try:
         mode = defaultMode
@@ -162,7 +168,10 @@ if __name__ == '__main__':
             elif letter == keybindings.KEY_SMART:
                 mode, selected, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
                 files = None
-            elif letter == '"':
+            elif letter == keybindings.KEY_REFRESH:
+                files = None
+            elif letter == keybindings.KEY_TOGGLE_HIDDEN:
+                showHiddenFiles = not showHiddenFiles
                 files = None
             elif mode == Mode.NORMAL:
                 if letter == keybindings.KEY_UP:
@@ -175,13 +184,11 @@ if __name__ == '__main__':
                     runCommandOnFile(os.path.realpath('.'), fileBrowser + ' "' + os.path.realpath('.') + '" > /dev/null 2>&1')
                 elif letter == keybindings.KEY_TMUX:
                     runCommandOnFile(os.path.realpath('.'), 'tmux > /dev/null')
-                elif letter == keybindings.KEY_SWAP_HIDDEN:
-                    showHiddenFiles = not showHiddenFiles
-                    files = None
             elif mode == Mode.SEARCH:
                 if letter:
                     if letter in charRange:
-                        searchBuffer = searchBuffer + letter
+                        if not restrictBuffer or (searchBuffer + letter) in list(map(slicer(len(searchBuffer) + 1), map(filenameClean, files))):
+                            searchBuffer = searchBuffer + letter
                     elif letter == keybindings.KEY_DELETE:
                         searchBuffer = searchBuffer[:-1]
 

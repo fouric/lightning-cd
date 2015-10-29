@@ -26,6 +26,7 @@ Common keybindings:
  - Semicolon quits Lightning
  - Single quote "does the right thing" on either the selected file or the first matching file
  - Double quote refreshes the file list
+ - Question mark toggles the visibility of "hidden" files (defined by those matching hiddenFilesPattern in settings.py)
 
 Search keybindings:
  - Letters are converted to lowercase, and along with period and numbers are valid search characters
@@ -36,7 +37,17 @@ Normal keybindings:
  - v opens the currently selected file with your text editor (NeoVim by default)
  - f opens the current directory with your file browser (Nautilus by default)
  - t opens Tmux at the current directory
- - d toggles the visibility of "hidden" files (currently those whose filenames start with a dot)
+
+Settings in settings.py:
+ - showDeselectedFiles controls the visibility of filenames that don't match the search buffer
+ - defaultMode sets the default mode for startup and mode switches
+ - editor, well, is the command used for opening files
+ - fileBrowser is the file browser opened when the file browser shortcut ('f' by default) is pressed
+ - persistentMode, if set, causes the current mode to stay the same on directory change
+ - lightningPathFile is the path of the file that Lightning writes the directory that should be cd'ed to
+ - showHiddenFiles sets the default visibility of hidden files
+ - hiddenFilesPattern is the regexp (Python3 re module) that, if matched, declares a pathname (works for files and directories) to be "hidden"
+ - restrictBuffer, if set, will cause the search buffer to refuse to accept characters that don't match at least one existing pathname
 
 Disclaimer
 ---------
