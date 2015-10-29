@@ -166,7 +166,7 @@ if __name__ == '__main__':
             elif letter == keybindings.KEY_QUIT:
                 runCommandOnFile(os.path.realpath('.'), 'true')
             elif letter == keybindings.KEY_SMART:
-                mode, selected, searchBuffer = takeActionOnPath(files[0 if mode == Mode.SEARCH else selected], os.path.realpath('.'))
+                mode, selected, searchBuffer = takeActionOnPath(files[files.index(selected[0]) if mode == Mode.SEARCH else selected], os.path.realpath('.'))
                 files = None
             elif letter == keybindings.KEY_REFRESH:
                 files = None
