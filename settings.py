@@ -9,3 +9,4 @@ fileBrowser = 'nautilus'
 persistentMode = True
 lightningPathFile = os.sys.argv[1]
 showHiddenFiles = False
+hiddenFilesPattern = '(^\\..*)|(.*~$)|(.*\\.(swp|pyc|fasl|o|spec|bak)$)|(__pycache__?.)'

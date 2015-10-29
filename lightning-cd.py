@@ -4,6 +4,7 @@ import traceback
 import termbox
 import os
 import sys
+import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from settings import *
@@ -117,6 +118,7 @@ if __name__ == '__main__':
         selected = selectedValueForMode(mode)
         files = None
         charRange = getCharRange()
+        hiddenExpression = re.compile(hiddenFilesPattern)
 
         t = termbox.Termbox()
         while True:
@@ -126,7 +128,7 @@ if __name__ == '__main__':
                 normalfiles = []
                 dotfiles = []
                 for f in files:
-                    (dotfiles if f[0] == '.' else normalfiles).append(f)
+                    (dotfiles if hiddenExpression.match(f) else normalfiles).append(f)
                 files = normalfiles
                 if showHiddenFiles:
                     files += dotfiles
