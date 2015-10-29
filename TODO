@@ -1,4 +1,4 @@
-Implement scrolling for large directory listings
+Implement scrolling/paging for large directory listings
 Implement vertical scrolling for normal mode
 Consider fuzzy search or rankings in terms of string length
 Color (using mimetypes)?
@@ -6,3 +6,5 @@ Separate files and directories in listings
 Use mimetype command to use appropriate command for opening files
 Rearrange hidden files so that they are intermingled with normal files (for non-dotfiles such as fasls)
 Design and implement glass mode
+Make searching in large directories easier by only subselecting out of already selected files
+Absorb excess keystrokes before quitting
