@@ -2,3 +2,4 @@ Implement scrolling for large directory listings
 Make actions on multiple selections more useful (e.g., allow you to j and k through multiple selections, then search, etc. using space to break)
 Consider fuzzy search or rankings in terms of string length
 Color?
+Separate files and directories in listings
