@@ -1,5 +1,7 @@
 # lightning-cd
 
+[![asciicast](https://asciinema.org/a/29041.png)]https://asciinema.org/a/29041)
+
 Lightning is a file browser and text editor launcher designed to allow you to find and edit files as fast as physically possible.  It acts as a complement to autojump; if autojump is the O(1) scroll of town teleport in constant time, then Lightning is the O(n) blink in linear time.
 
 Dependencies
