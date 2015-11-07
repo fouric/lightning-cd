@@ -6,7 +6,8 @@ import os
 import sys
 import re
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append('/home/grant/Ramdisk/lcache/termbox')
 from settings import *
 import keybindings
 
@@ -62,7 +63,7 @@ def writePath(filename, path):
 def selectedValueForMode(mode):
     return [] if mode == Mode.SEARCH else 0
 
-def drawFileList(t, ystart, yend, mode, selected):
+def drawFileList(t, ystart, yend, xend, mode, selected):
     "Draw the list of selected files onto the screen"
     x = 0
     width = 1
@@ -73,6 +74,8 @@ def drawFileList(t, ystart, yend, mode, selected):
             y = ystart
             x += width
             width = 1
+        if x >= xend:
+            break
         # get the foreground and background colors for a particular filename
         fg, bg = getFileColors(mode, selected, f, files)
         if showThisFile(f, mode, selected):
@@ -80,6 +83,7 @@ def drawFileList(t, ystart, yend, mode, selected):
                 f = f + '/'
             width = max(width, len(f) + 1)
             writeText(t, x, y, f, fg, bg)
+            #writeText(t, x, y, re.sub('grant', 'fouric', f), fg, bg)
             y += 1
 
 def switchMode(prevMode, selected):
@@ -140,7 +144,7 @@ if __name__ == '__main__':
                     files += dotfiles
             if mode == Mode.SEARCH:
                 selected = selectFilesOnsearchBuffer(files, searchBuffer)
-            drawFileList(t, 1, t.height() - 1, mode, selected)
+            drawFileList(t, 1, t.height() - 1, tb.width() - 1, mode, selected)
             if mode == Mode.SEARCH:
                 if len(selected) == 1 and len(searchBuffer):
                     mode, selected, searchBuffer = takeActionOnPath(selected[0], os.path.realpath('.'))
@@ -149,6 +153,7 @@ if __name__ == '__main__':
                 writeText(t, 0, t.height() - 1, searchBuffer, termbox.WHITE, 0)
             modeText = 'search' if mode == Mode.SEARCH else 'normal'
             writeText(t, 0, 0, modeText + ": ", termbox.WHITE, 0)
+            #writeText(t, len(modeText) + 2, 0, re.sub('grant', 'fouric', os.path.realpath('.')), termbox.WHITE, 0)
             writeText(t, len(modeText) + 2, 0, os.path.realpath('.'), termbox.WHITE, 0)
             t.present()
 
