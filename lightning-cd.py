@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import traceback
 import termbox
@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     files += dotfiles
             if mode == Mode.SEARCH:
                 selected = selectFilesOnsearchBuffer(files, searchBuffer)
-            drawFileList(t, 1, t.height() - 1, tb.width() - 1, mode, selected)
+            drawFileList(t, 1, t.height() - 1, t.width() - 1, mode, selected)
             if mode == Mode.SEARCH:
                 if len(selected) == 1 and len(searchBuffer):
                     mode, selected, searchBuffer = takeActionOnPath(selected[0], os.path.realpath('.'))
