@@ -5,6 +5,7 @@ import termbox
 import os
 import sys
 import re
+import subprocess
 
 #sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append('/home/grant/Ramdisk/lcache/termbox')
@@ -106,7 +107,10 @@ def takeActionOnPath(f, path):
         searchBuffer = ''
         return (newMode, selected, searchBuffer)
     elif os.path.isfile(f):
-        runCommandOnFile(path, editor + ' "' + f + '"')
+        mimetype = str(subprocess.check_output(['mimetype', f])).split(' ')[-1][:-3]
+        for mapping in mimePatterns:
+            if re.compile(mapping[0]).match(mimetype):
+                runCommandOnFile(path, mapping[1] + ' "' + f + '"')
 
 def runCommandOnFile(path, command):
     "Close lightning, write the current path, and execute the command"
@@ -183,8 +187,6 @@ if __name__ == '__main__':
                     selected = (selected - 1) % len(files)
                 elif letter == keybindings.KEY_DOWN:
                     selected = (selected + 1) % len(files)
-                elif letter == keybindings.KEY_EDITOR:
-                    runCommandOnFile(os.path.realpath('.'), editor + ' "' + files[selected]) + '"'
                 elif letter == keybindings.KEY_FILE_BROWSER:
                     runCommandOnFile(os.path.realpath('.'), fileBrowser + ' "' + os.path.realpath('.') + '" > /dev/null 2>&1')
                 elif letter == keybindings.KEY_TMUX:
