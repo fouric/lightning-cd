@@ -1,6 +1,5 @@
 KEY_UP = 'k'
 KEY_DOWN = 'j'
-KEY_EDITOR = 'v'
 KEY_FILE_BROWSER = 'f'
 KEY_TMUX = 't'
 KEY_SWAP_HIDDEN = 'd'

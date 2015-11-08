@@ -2,7 +2,7 @@
 
 [![asciicast](https://asciinema.org/a/29041.png)](https://asciinema.org/a/29041)
 
-Lightning is a file browser and text editor launcher designed to allow you to find and edit files as fast as physically possible.  It acts as a complement to autojump; if autojump is the O(1) scroll of town teleport in constant time, then Lightning is the O(n) blink in linear time.
+Lightning is a tool designed to allow you to find and open files as fast as physically possible.  It acts as a complement to autojump (https://github.com/wting/autojump); while autojump allows you to go from anywhere to your most accessed directories with just a few keystrokes, Lightning allows you to fly around your filesystem with reckless abandon, flitting through directories and opening files with ease.
 
 Dependencies
 -----------
@@ -26,7 +26,7 @@ Common keybindings:
  - Comma moves up one directory
  - Space toggles the mode between search and normal
  - Semicolon quits Lightning
- - Single quote "does the right thing" on either the selected file or the first matching file
+ - Single quote "does the right thing" on either the selected file (normal mode) or the first matching file (search mode)
  - Double quote refreshes the file list
  - Question mark toggles the visibility of "hidden" files (defined by those matching hiddenFilesPattern in settings.py)
 
@@ -36,24 +36,25 @@ Search keybindings:
 
 Normal keybindings:
  - j and k move down and up, respectively
- - v opens the currently selected file with your text editor (NeoVim by default)
  - f opens the current directory with your file browser (Nautilus by default)
  - t opens Tmux at the current directory
+
+All of the above keybindings can (and should) be changed by editing keybindings.py.
 
 Settings in settings.py:
  - showDeselectedFiles controls the visibility of filenames that don't match the search buffer
  - defaultMode sets the default mode for startup and mode switches
- - editor, well, is the command used for opening files
  - fileBrowser is the file browser opened when the file browser shortcut ('f' by default) is pressed
  - persistentMode, if set, causes the current mode to stay the same on directory change
  - lightningPathFile is the path of the file that Lightning writes the directory that should be cd'ed to
  - showHiddenFiles sets the default visibility of hidden files
  - hiddenFilesPattern is the regexp (Python3 re module) that, if matched, declares a pathname (works for files and directories) to be "hidden"
  - restrictBuffer, if set, will cause the search buffer to refuse to accept characters that don't match at least one existing pathname
+ - mimePatterns tells Lightning, using mimetypes, how to handle files when told to open them
 
 Disclaimer
 ---------
 
-Lightning is ALPHA, very much buggy and non-feature-complete, and likely to change very quickly.  With that said, the basic idea (of finding and editing files as quickly as physically possible) will remain the same, and you are encouraged to try it out and give feedback.
+Lightning is ALPHA, very much buggy and non-feature-complete, and likely to change very quickly (with changes possibly including *a move to another programming language* - use at your own risk).  With that said, the basic idea (of finding and opening files as quickly as physically possible) will remain the same, and you are encouraged to try it out and give feedback.
 
-(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak it if you use QWERTY)
+(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak for convenience and comfort it if you use QWERTY)

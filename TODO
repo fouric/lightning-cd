@@ -2,11 +2,10 @@ Implement scrolling/paging for large directory listings
 Implement vertical scrolling for normal mode
 Consider fuzzy search or rankings in terms of string length
 Color (using mimetypes)?
-Separate files and directories in listings
-Use mimetype command to use appropriate command for opening files
 Rearrange hidden files so that they are intermingled with normal files (for non-dotfiles such as fasls)
 Design and implement glass mode
 Make searching in large directories easier by only subselecting out of already selected files
 Absorb excess keystrokes before quitting
+Just throw all pretense of modularity to the wind and make the entire thing a big state machine
 
 BUGFIX: exec'ing to a process and then using another Lightning instance will cause the exec'd instance to cd to the wrong directory. Fix or edge case? Solution: Use a directory-stack-based dirwrite file.
