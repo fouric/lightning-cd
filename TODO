@@ -5,7 +5,11 @@ Color (using mimetypes)?
 Rearrange hidden files so that they are intermingled with normal files (for non-dotfiles such as fasls)
 Design and implement glass mode
 Make searching in large directories easier by only subselecting out of already selected files
-Absorb excess keystrokes before quitting
 Just throw all pretense of modularity to the wind and make the entire thing a big state machine
+Add a preview pane when in select mode (thanks to Mithaldu on HN)
+
+Lisp edition:
+
+Use full ls in a directory to avoid having to continually get subshells to check for file/directory status.
 
 BUGFIX: exec'ing to a process and then using another Lightning instance will cause the exec'd instance to cd to the wrong directory. Fix or edge case? Solution: Use a directory-stack-based dirwrite file.

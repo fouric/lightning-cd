@@ -110,12 +110,14 @@ def takeActionOnPath(f, path):
         mimetype = str(subprocess.check_output(['mimetype', f])).split(' ')[-1][:-3]
         for mapping in mimePatterns:
             if re.compile(mapping[0]).match(mimetype):
-                runCommandOnFile(path, mapping[1] + ' "' + f + '"')
+                escape = '\\' if 'escape-slash' in mapping else ''
+                runCommandOnFile(path, mapping[1] + ' ' + escape + '"' + f + escape + '"' + mapping[2] if len(mapping) >= 3 else '')
 
 def runCommandOnFile(path, command):
     "Close lightning, write the current path, and execute the command"
     t.close()
     writePath(lightningPathFile, path)
+    print(command)
     os.system(command)
     quit()
 
@@ -201,7 +203,6 @@ if __name__ == '__main__':
 
         t.close()
     except Exception as e:
-        #f = open('~/lightning-cd-error.txt', 'w')
-        f = open('error.txt', 'w')
+        f = open(os.path.dirname(os.path.abspath(__file__)) + '/lightning-error.txt', 'w')
         f.write(traceback.format_exc() + '\n')
         f.close()
