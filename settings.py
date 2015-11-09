@@ -10,4 +10,4 @@ lightningPathFile = os.sys.argv[1]
 showHiddenFiles = False
 hiddenFilesPattern = '(^\\..*)|(.*~$)|(.*\\.(swp|pyc|fasl|o|spec|bak)$)|(__pycache__?.)'
 restrictBuffer = True
-mimePatterns = [('text\\/.*', 'nvim'), ('.*', 'xdg-open')]
+mimePatterns = [('text\\/.*', 'nvim'), ('application\\/x-shellscript', 'nvim'), ('application\\/x-executable', 'bash -c "exec', '"', 'escape-slash'), ('.*', 'xdg-open')]
