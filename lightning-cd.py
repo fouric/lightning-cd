@@ -111,7 +111,7 @@ def takeActionOnPath(f, path):
         for mapping in mimePatterns:
             if re.compile(mapping[0]).match(mimetype):
                 escape = '\\' if 'escape-slash' in mapping else ''
-                runCommandOnFile(path, mapping[1] + ' ' + escape + '"' + f + escape + '"' + mapping[2] if len(mapping) >= 3 else '')
+                runCommandOnFile(path, mapping[1] + ' ' + escape + '"' + f + escape + '"' + (mapping[2] if len(mapping) >= 3 else ''))
 
 def runCommandOnFile(path, command):
     "Close lightning, write the current path, and execute the command"
