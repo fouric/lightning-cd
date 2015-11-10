@@ -1,6 +1,6 @@
 # lightning-cd
 
-[![asciicast](https://asciinema.org/a/29041.png)](https://asciinema.org/a/29041)
+[![asciicast](https://asciinema.org/a/29694.png)](https://asciinema.org/a/29694)
 
 Lightning is a tool designed to allow you to find and open files as fast as physically possible.  It acts as a complement to autojump (https://github.com/wting/autojump); while autojump allows you to go from anywhere to your most accessed directories with just a few keystrokes, Lightning allows you to fly around your filesystem with reckless abandon, flitting through directories and opening files with ease.
 
@@ -15,7 +15,7 @@ Installation
 
 Merely copy lightning-cd.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
 
-alias li='python3 ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
+alias i='python3 ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
 
 Usage
 -----
@@ -52,9 +52,11 @@ Settings in settings.py:
  - restrictBuffer, if set, will cause the search buffer to refuse to accept characters that don't match at least one existing pathname
  - mimePatterns tells Lightning, using mimetypes, how to handle files when told to open them
 
+One of the basic assumptions behind Lightning is that you'll be spending most of your time in search mode, and only switching to normal mode to select files that would otherwise require a (relatively) large number of keystrokes. You may violate this assumption if you wish, at which point you will discover that you are using a watered-down `mc` (http://www.midnight-commander.org/). Play off Lightning's strengths, avoid its weaknesses (or use another tool), and you may find yourself enjoying productivity gains due to lower mental costs associated with switching source code files.
+
 Disclaimer
 ---------
 
 Lightning is ALPHA, very much buggy and non-feature-complete, and likely to change very quickly (with changes possibly including *a move to another programming language* - use at your own risk).  With that said, the basic idea (of finding and opening files as quickly as physically possible) will remain the same, and you are encouraged to try it out and give feedback.
 
-(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak for convenience and comfort it if you use QWERTY)
+(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak the keybindings for convenience and comfort if you use QWERTY)
