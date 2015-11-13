@@ -9,6 +9,7 @@
 
 # Emacs
 *~
+\#*
 
 # spec files
 *.spec

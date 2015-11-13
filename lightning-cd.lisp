@@ -10,27 +10,41 @@
 
 
 (defparameter *show-deselected-files* nil)
-(defparameter *default-mode* 'search)
-(defparameter *editor* (to-list "nvim"))
-(defparameter *lightning-path-file* (to-list "/home/grant/Ramdisk/.lightningpath"))
-(defparameter *current-directory* (butlast (to-list (trivial-shell:shell-command "pwd"))))
+(defparameter *default-mode* :search)
+(defparameter *editor* "nvim")
+(defparameter *lightning-path-file* "/home/grant/Ramdisk/.lightningpath")
+(defparameter *current-directory* (cdpwd "."))
 
-(defun lspwd (path)
-  (let* ((data (rest (butlast (split-sequence:split-sequence #\newline (trivial-shell:shell-command (format nil "ls -lA \"~A\";pwd" path))))))
-	 (cwd (first (last data)))
-	 (raw-files (butlast data))
+
+(defun ls (&optional (path *current-directory*))
+  "takes a string as a path and returns a list of lists, with each sublist representing a file and containing a filename and if the file is a directory"
+  (let* ((raw-files (butlast (rest (butlast (split-sequence:split-sequence #\newline (trivial-shell:shell-command (format nil "ls -lA \"~A\"" path)))))))
 	 (files (mapcar (lambda (raw)
-			  (list :dir-p (string= "d" (subseq raw 0 1))
+			  (list :type (case (first (coerce (subseq raw 0 1) 'list))
+					(#\-
+					 :file)
+					(#\d
+					 :directory)
+					(#\p
+					 :fifo)
+					(#\c
+					 :char-device)
+					(#\l
+					 :lin)
+					(#\b
+					 :block-device))
 				:name (coerce (butlast (coerce (apply #'concatenate 'string
 								       (mapcar (lambda (str)
 										 (concatenate 'string str " ")) (nthcdr 8
 															(remove "" (split-sequence:split-sequence #\space raw) :test #'string=)))) 'list)) 'string))) raw-files)))
-    (list :files files
-	  :cwd cwd)))
+    files))
 
-(defmethod cdpwd (path)
+(defun cdpwd (path)
   "modifies a special variable that corresponds to the current path"
-  (coerce (butlast (coerce (trivial-shell:shell-command (concatenate 'string "cd \"" path "\";pwd")) 'list)) 'string))
+  (setf *current-directory* (coerce (butlast (coerce (trivial-shell:shell-command (concatenate 'string "cd \"" path "\";pwd")) 'list)) 'string)))
+
+(defun pwd ()
+  *current-directory*)
 
 (defmethod write-text ((x integer) (y integer) (text list) &optional (fg-bg '(0 . 0)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"
@@ -46,27 +60,29 @@
 	  (nconc chars (list (code-char i)))))
     chars))
 
-(defmethod filename-clean ((filename list))
+(defun filename-clean (filename)
   "convert a raw filename to a simplified one that can be searched for"
   (let ((acceptable-chars (get-char-range)))
-    (remove-if-not (lambda (item) (member item acceptable-chars)) (to-list (string-downcase (to-string filename))))))
+    (to-string (remove-if-not (lambda (item)
+				(member item acceptable-chars))
+			      (to-list (string-downcase filename))))))
 
 (defun select-files-in-search-buffer (all-files search-buffer)
   "return a list of selected files by comparing simplified filenames with the search buffer"
-  (remove-if-not (lambda (file) (equal search-buffer (subseq (filename-clean file) 0 (length search-buffer)))) all-files))
+  (remove-if-not (lambda (file) (string= search-buffer (subseq (filename-clean file) 0 (length search-buffer)))) all-files))
 
 (defmethod get-file-colors ((mode symbol) (selected-files list) (selected-index integer) (this-file list) (file-list list))
   "return a cons cell containing the foreground and background colors for the given file"
   (cond
-    ((and (eq mode 'search) (member this-file selected-files :test #'equal) *show-deselected-files*)
-     (cons (tb-const "TB_BLACK") (tb-const "TB_WHITE")))
-    ((and (eq mode 'normal) (equal this-file (nth selected-index file-list)))
-     (cons (tb-const "TB_BLACK") (tb-const "TB_WHITE")))
+    ((and (eq mode :search) (member this-file selected-files :test #'string=) *show-deselected-files*)
+     (cons termbox:+black+ termbox:+white+))
+    ((and (eq mode :normal) (equal this-file (nth selected-index file-list)))
+     (cons termbox:+black+ termbox:+white+))
     (t
      (cons 0 0))))
 
 (defun show-this-file-p (this-file selected-files)
-  (or *show-deselected-files* (member this-file selected-files :test #'equal) (null selected-files)))
+  (or *show-deselected-files* (member this-file selected-files :test #'string=) (null selected-files)))
 
 (defun write-path (filename path)
   (with-open-file (out filename
@@ -78,44 +94,47 @@
 (defun draw-file-list (ystart yend mode selected-files selected-index file-list)
   "draw the list of selected file-list onto the screen"
   (let ((x 0)
-	(width 1)
-	(y ystart))
+	(y ystart)
+	(width (apply #'max (mapcar (lambda (f)
+				      (length (coerce f 'list)))
+				    selected-files))))
     (dolist (f file-list)
       (if (= y yend)
 	  (setf y ystart
-		x (+ x width)
-		width 1))
+		x (+ x width)))
       (when (show-this-file-p f selected-files)
-	(if (dir-p f)
-	    (setf f (to-string (append (coerce f 'list) (list #\/)))))
-	(setf width (max width (+ (length (coerce f 'list)) 1)))
-	(write-text x y f (get-file-colors mode selected-files selected-index f file-list))
+	
+	(write-text x y (if (eq (getf f :type) :directory)
+			    (concatenate 'string (getf f :name) "/")
+			    (getf f :name))
+		    (get-file-colors mode selected-files selected-index file-list))
 	(incf y)))))
 
 (defun switch-mode (prev-mode selected selected-files files)
   "switch the mode to either search or normal and do associated setup for each mode"
   (let ((new-mode nil))
-    (if (eq prev-mode 'search)
+    (if (eq prev-mode :search)
 	(setf selected (if (plusp (length selected-files))
 			   (position (nth 0 selected-files) files)
 			   0)
-	      new-mode 'normal)
-	(setf new-mode 'search))
+	      new-mode :normal)
+	(setf new-mode :search))
     (list new-mode selected)))
 
 (defun open-file-with-command (path command)
   "write the current path, close Lightning, and execute the command"
   (termbox:shutdown)
-  (write-path (to-string *lightning-path-file*) (to-string path))
-  (trivial-shell:shell-command (to-string command))
+  (write-path (to-string *lightning-path-file*) path)
+  (trivial-shell:shell-command command)
   (exit))
 
-(defun action (filename path)
+(defun action (file path)
   "do something with a filename that the user selected"
-  (when (dir-p filename)
-    (cd filename))
-  (when (file-p filename)
-    (open-file-with-command path (append *editor* (list #\space) filename))))
+  (case (getf file :type)
+    (:file
+     (open-file-with-command path (concatenate 'string *editor* " \"" *current-directory* (getf file :name) "\"")))
+    (:directory
+     (setf *current-directory* (cdpwd (getf file :name))))))
 
 (defun lightning ()
   (let ((mode *default-mode*)
@@ -126,12 +145,13 @@
 	(char-range (get-char-range)))
     (termbox:init)
     (loop
-					; sort files
+					; if files is nil, then we've nuked the buffer because of a cd or something; time to regenerate!
        (if (null all-files)
-	   (setf all-files (mapcar #'to-list (sort (mapcar #'to-string (ls)) #'string<))))
+	   (setf all-files (sort (ls *current-directory*) (lambda (x y)
+							    (string< (getf x :name) (getf y :name))))))
 
 					; if we're in search mode, only show files that match the buffer
-       (if (and (eq mode 'search) search-buffer)
+       (if (and (eq mode :search) search-buffer)
 	   (setf selected-files (select-files-in-search-buffer all-files search-buffer)))
 
 					; clear
@@ -139,14 +159,14 @@
 
 					; draw file list, search string, mode, and current directory
        (draw-file-list 1 (1- (termbox:height)) mode selected-files selected-index all-files)
-       (if (eq mode 'search)
+       (if (eq mode :search)
 	   (write-text 0 (1- (termbox:height)) search-buffer))
        (write-text 0 0 (append (to-list (string mode)) (to-list ": ") *current-directory*))
        (termbox:present)
 
 					; get and process input
        (cond
-	 ((and (eq mode 'search) (= (length selected-files) 1) (plusp (length search-buffer)))
+	 ((and (eq mode :search) (= (length selected-files) 1) (plusp (length search-buffer)))
 	  (action (nth 0 selected-files) *current-directory*)
 	  (setf mode *default-mode*
 		all-files ()
@@ -179,7 +199,7 @@
 		       
 					; quit to the current directory
 					; normal-mode-specific commands
-		       ((eq mode 'normal)
+		       ((eq mode :normal)
 			(cond
 					; move up one item
 			  ((eq letter #\k)
@@ -196,7 +216,7 @@
 				 search-buffer ()))
 			  ((eq letter #\v)
 			   (open-file-with-command *current-directory* (append *editor* (list #\space) (list (nth selected-index all-files)))))))))
-		    ((eq mode 'search)
+		    ((eq mode :search)
 		     (cond
 		       (letter
 			(cond
