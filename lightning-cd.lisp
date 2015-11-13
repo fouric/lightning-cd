@@ -1,14 +1,6 @@
 (asdf:load-system :split-sequence)
 (asdf:load-system :trivial-shell)
-
-(asdf:load-system :cl-plus-c)
-(use-package :plus-c)
-
-(cffi-sys:%load-foreign-library
- :libtest #p"/usr/lib/libtermbox.so")
-
-(autowrap:c-include "/usr/include/termbox.h"
-		    :constant-accessor tb-const)
+(asdf:load-system :cl-termbox)
 
 (defun to-list (item)
   (coerce item 'list))
@@ -16,36 +8,34 @@
 (defun to-string (item)
   (coerce item 'string))
 
-(defmethod dir-p ((path list))
-  "takes a path as a *list* and determines whether the path identifies a directory"
-  (plusp (length (trivial-shell:shell-command (concatenate 'string "if [ -d " (to-string path) " ]; then echo 1; fi")))))
-
-(defmethod file-p ((path list))
-  "takes a path as a *list* and determines whether the path identifies a file"
-  (plusp (length (trivial-shell:shell-command (concatenate 'string "if [ -f " (to-string path) " ]; then echo 1; fi")))))
-
-(defun pwd ()
-  "returns a list of characters of the current working directory"
-  (butlast (to-list (trivial-shell:shell-command "pwd"))))
 
 (defparameter *show-deselected-files* nil)
 (defparameter *default-mode* 'search)
 (defparameter *editor* (to-list "nvim"))
 (defparameter *lightning-path-file* (to-list "/home/grant/Ramdisk/.lightningpath"))
-(defparameter *current-directory* (pwd))
+(defparameter *current-directory* (butlast (to-list (trivial-shell:shell-command "pwd"))))
 
-(defun ls ()
-  "takes an optional path as a *list* and returns a list of list of characters that correspond to a directory listing"
-  (butlast (split-sequence:split-sequence #\newline (to-list (trivial-shell:shell-command (concatenate 'string "ls \"" (to-string *current-directory*) "\""))))))
+(defun lspwd (path)
+  (let* ((data (rest (butlast (split-sequence:split-sequence #\newline (trivial-shell:shell-command (format nil "ls -lA \"~A\";pwd" path))))))
+	 (cwd (first (last data)))
+	 (raw-files (butlast data))
+	 (files (mapcar (lambda (raw)
+			  (list :dir-p (string= "d" (subseq raw 0 1))
+				:name (coerce (butlast (coerce (apply #'concatenate 'string
+								       (mapcar (lambda (str)
+										 (concatenate 'string str " ")) (nthcdr 8
+															(remove "" (split-sequence:split-sequence #\space raw) :test #'string=)))) 'list)) 'string))) raw-files)))
+    (list :files files
+	  :cwd cwd)))
 
-(defmethod cd ((path list))
+(defmethod cdpwd (path)
   "modifies a special variable that corresponds to the current path"
-  (setf *current-directory* (append *current-directory* (list #\/) path)))
+  (coerce (butlast (coerce (trivial-shell:shell-command (concatenate 'string "cd \"" path "\";pwd")) 'list)) 'string))
 
 (defmethod write-text ((x integer) (y integer) (text list) &optional (fg-bg '(0 . 0)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"
   (dotimes (i (length text))
-    (tb-change-cell (+ x i) y (char-code (nth i (to-list text))) (car fg-bg) (cdr fg-bg))))
+    (termbox:change-cell (+ x i) y (char-code (nth i (to-list text))) (car fg-bg) (cdr fg-bg))))
 
 (defun get-char-range ()
   "get a string of the characters that are valid to enter in search mode"
@@ -115,7 +105,7 @@
 
 (defun open-file-with-command (path command)
   "write the current path, close Lightning, and execute the command"
-  (tb-shutdown)
+  (termbox:shutdown)
   (write-path (to-string *lightning-path-file*) (to-string path))
   (trivial-shell:shell-command (to-string command))
   (exit))
@@ -134,84 +124,87 @@
 	(selected-index 0)
 	(all-files ())
 	(char-range (get-char-range)))
-    (tb-init)
+    (termbox:init)
     (loop
 					; sort files
-       (setf all-files (mapcar #'to-list (sort (mapcar #'to-string (ls)) #'string<)))
+       (if (null all-files)
+	   (setf all-files (mapcar #'to-list (sort (mapcar #'to-string (ls)) #'string<))))
 
 					; if we're in search mode, only show files that match the buffer
        (if (and (eq mode 'search) search-buffer)
 	   (setf selected-files (select-files-in-search-buffer all-files search-buffer)))
 
 					; clear
-       (tb-clear)
+       (termbox:clear)
 
 					; draw file list, search string, mode, and current directory
-       (draw-file-list 1 (1- (tb-height)) mode selected-files selected-index all-files)
+       (draw-file-list 1 (1- (termbox:height)) mode selected-files selected-index all-files)
        (if (eq mode 'search)
-	   (write-text 0 (1- (tb-height)) search-buffer))
+	   (write-text 0 (1- (termbox:height)) search-buffer))
        (write-text 0 0 (append (to-list (string mode)) (to-list ": ") *current-directory*))
-       (tb-present)
+       (termbox:present)
 
 					; get and process input
        (cond
 	 ((and (eq mode 'search) (= (length selected-files) 1) (plusp (length search-buffer)))
 	  (action (nth 0 selected-files) *current-directory*)
 	  (setf mode *default-mode*
+		all-files ()
 		selected-files ()
 		selected-index 0
 		search-buffer ()))
 	 (t
 	  (plus-c:c-let ((event (:struct (tb-event)) :free t))
-	    (tb-poll-event event)
-	    (let ((letter (code-char (event :ch)))
-		  (keycode (event :key)))
-	      (cond
-					; go up one directory
-		((eq letter #\.)
-		 (cd (to-list ".."))
-		 (setf search-buffer ()
-		       selected-index 0))
+	    (termbox:poll-event event)
+	    (if (eq event (tb-const "TB_EVENT_KEY"))
+		(let ((letter (code-char (event :ch)))
+		      (keycode (event :key)))
+		  (cond
+		    ((eq keycode (tb-const "TB_KEY_SPACE"))
+		     (let ((result (switch-mode mode selected-index selected-files all-files)))
+		       (setf mode (nth 0 result)
+			     selected-index (nth 1 result)
+			     selected-files ()
+			     search-buffer ())))
+		    (letter
+		     (cond
+		       ((eq letter #\,)
+			(cd (to-list ".."))
+			(setf search-buffer ()
+			      all-files ()
+			      selected-index 0))
+		       ((eq letter #\;)
+			(open-file-with-command *current-directory* (to-list "true")))
 					; switch modes
-		((eq keycode (tb-const "TB_KEY_SPACE"))
-		 (let ((result (switch-mode mode selected-index selected-files all-files)))
-		   (setf mode (nth 0 result)
-			 selected-index (nth 1 result)
-			 selected-files ()
-			 search-buffer ())))
-					; quit instantly
-		((eq keycode (tb-const "TB_KEY_ESC"))
-		 (return))
+		       
 					; quit to the current directory
-		((eq letter #\;)
-		 (open-file-with-command *current-directory* (to-list "true")))
 					; normal-mode-specific commands
-		((eq mode 'normal)
-		 (cond
+		       ((eq mode 'normal)
+			(cond
 					; move up one item
-		   ((eq letter #\k)
-		    (setf selected-index (mod (1- selected-index) (length all-files))))
+			  ((eq letter #\k)
+			   (setf selected-index (mod (1- selected-index) (length all-files))))
 					; move down one item
-		   ((eq letter #\j)
-		    (setf selected-index (mod (1+ selected-index) (length all-files))))
+			  ((eq letter #\j)
+			   (setf selected-index (mod (1+ selected-index) (length all-files))))
 					; open the current item
-		   ((eq letter #\')
-		    (action (nth selected-index all-files) *current-directory*)
-		    (setf mode *default-mode*
-			  selected-files ()
-			  selected-index 0
-			  search-buffer ()))
-		   ((eq letter #\v)
-		    (open-file-with-command *current-directory* (append *editor* (list #\space) (list (nth selected-index all-files)))))))
-		((eq mode 'search)
-		 (cond
-		   (letter
-		    (cond
-		      ((member letter char-range)
-		       (setf search-buffer (append search-buffer (list letter))))
-		      ((eq letter #\-)
-		       (setf search-buffer (butlast search-buffer)))))
-		   ((eq keycode (tb-const "TB_KEY_ENTER"))
-		    (action (nth 0 selected-files) *current-directory*))))))))))))
+			  ((eq letter #\')
+			   (action (nth selected-index all-files) *current-directory*)
+			   (setf mode *default-mode*
+				 selected-files ()
+				 selected-index 0
+				 search-buffer ()))
+			  ((eq letter #\v)
+			   (open-file-with-command *current-directory* (append *editor* (list #\space) (list (nth selected-index all-files)))))))))
+		    ((eq mode 'search)
+		     (cond
+		       (letter
+			(cond
+			  ((member letter char-range)
+			   (setf search-buffer (append search-buffer (list letter))))
+			  ((eq letter #\-)
+			   (setf search-buffer (butlast search-buffer)))
+			  ((eq letter #\')
+			   (action (nth 0 selected-files) *current-directory*)))))))))))))))
 
 (lightning)
