@@ -4,59 +4,33 @@
 
 Lightning is a tool designed to allow you to find and open files as fast as physically possible.  It acts as a complement to autojump (https://github.com/wting/autojump); while autojump allows you to go from anywhere to your most accessed directories with just a few keystrokes, Lightning allows you to fly around your filesystem with reckless abandon, flitting through directories and opening files with ease.
 
+
+Disclaimer
+---------
+
+This is the Common Lisp branch of Lightning, and is currently virtually unusable. The original version is written in Python, and is _much_ more fast, stable, and powerful than the Lisp version; if you want to actually _use_ Lightning, then you should use the Python branch, as I do. However, I plan to make this branch the primary one as soon as it works reasonably well, so you might want to be prepared to migrate sometime in the near future.
+
 Dependencies
 -----------
 
- - Termbox (https://github.com/nsf/termbox) with Python 3 bindings installed
- - A relatively recent version of Python 3
+ - [Termbox](https://github.com/nsf/termbox)
+ - A modern Common Lisp implementation with support for (ASDF)[https://common-lisp.net/project/asdf/asdf.html] ([SBCL](http://www.sbcl.org/) is a good choice)
+ - [cl-termbox](https://github.com/fouric/cl-termbox)
 
 Installation
 ------------
 
-Merely copy lightning-cd.py to someplace convenient and add an alias to it, like so.  Lightning takes as its first argument the full path of a file that it writes a directory path to when quitting.  If your alias is set up like the below, then you should be able to use Lightning to change your shell's current working directory:
+Copy the Lightning directory to someplace convenient, then add an alias to it, like so:
 
-alias i='python3 ~/code/lightning-cd/lightning-cd.py ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
+alias i='sbcl ~/code/lightning-cd/lightning-cd.lisp ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
+
+Lightning takes as its primary argument the path of a file to write a directory path to. While quitting, Lightning will write the current working directory to that file, and if you have an alias set up similar to the above, then your shell should move to the directory where Lightning quit.
 
 Usage
 -----
 
 Lightning is an interactive, modal tool with letter keybindings very similar to vim.  It contains two modes, search and normal.  Normal mode allows you to select a file by moving up and down through a list.  Search mode, the default, takes letters that you type, filters them, and then uses them to open a file once the search buffer contains enough to uniquely identify a file.
 
-Common keybindings:
- - Comma moves up one directory
- - Space toggles the mode between search and normal
- - Semicolon quits Lightning
- - Single quote "does the right thing" on either the selected file (normal mode) or the first matching file (search mode)
- - Double quote refreshes the file list
- - Question mark toggles the visibility of "hidden" files (defined by those matching hiddenFilesPattern in settings.py)
-
-Search keybindings:
- - Letters are converted to lowercase, and along with period and numbers are valid search characters
- - Dash removes a character from the search buffer
-
-Normal keybindings:
- - j and k move down and up, respectively
- - f opens the current directory with your file browser (Nautilus by default)
- - t opens Tmux at the current directory
-
-All of the above keybindings can (and should) be changed by editing keybindings.py.
-
-Settings in settings.py:
- - showDeselectedFiles controls the visibility of filenames that don't match the search buffer
- - defaultMode sets the default mode for startup and mode switches
- - fileBrowser is the file browser opened when the file browser shortcut ('f' by default) is pressed
- - persistentMode, if set, causes the current mode to stay the same on directory change
- - lightningPathFile is the path of the file that Lightning writes the directory that should be cd'ed to
- - showHiddenFiles sets the default visibility of hidden files
- - hiddenFilesPattern is the regexp (Python3 re module) that, if matched, declares a pathname (works for files and directories) to be "hidden"
- - restrictBuffer, if set, will cause the search buffer to refuse to accept characters that don't match at least one existing pathname
- - mimePatterns tells Lightning, using mimetypes, how to handle files when told to open them
+Actual keybindings and settings will be HERE as soon as they work.
 
 One of the basic assumptions behind Lightning is that you'll be spending most of your time in search mode, and only switching to normal mode to select files that would otherwise require a (relatively) large number of keystrokes. You may violate this assumption if you wish, at which point you will discover that you are using a watered-down `mc` (http://www.midnight-commander.org/). Play off Lightning's strengths, avoid its weaknesses (or use another tool), and you may find yourself enjoying productivity gains due to lower mental costs associated with switching source code files.
-
-Disclaimer
----------
-
-Lightning is ALPHA, very much buggy and non-feature-complete, and likely to change very quickly (with changes possibly including *a move to another programming language* - use at your own risk).  With that said, the basic idea (of finding and opening files as quickly as physically possible) will remain the same, and you are encouraged to try it out and give feedback.
-
-(it was also built for a Dvorak Simplified Keyboard user, so you may want to tweak the keybindings for convenience and comfort if you use QWERTY)
