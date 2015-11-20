@@ -89,7 +89,7 @@
 (defun get-file-colors (mode selected-index this-file file-list)
   "return a cons cell containing the foreground and background colors for the given file"
   (cond
-    ((and (eq mode :normal) (equal this-file (nth selected-index file-list)))
+    ((and (eq mode :normal) (string= (getf this-file :clean-name) (getf (nth selected-index file-list) :clean-name)))
      (cons termbox:+black+ termbox:+white+))
     (t
      (cons termbox:+default+ termbox:+default+))))
@@ -126,7 +126,7 @@
 	(write-text x y (if (eq (getf f :type) :directory)
 			    (strcat (getf f :name) "/")
 			    (getf f :name))
-		    (get-file-colors mode selected-index (nth selected-index file-list) file-list))
+		    (get-file-colors mode selected-index f file-list))
 	(incf y)))))
 
 (defun switch-mode (prev-mode selected selected-files files)
@@ -145,14 +145,13 @@
   (termbox:shutdown)
   (write-string-to-file *lightning-path-file* path)
   (write-string-to-file *lightning-command-file* command)
-  (print command)
   (exit))
 
 (defun action (file path)
   "do something with a filename that the user selected"
   (case (getf file :type)
     (:file
-     (open-file-with-command path (concatenate 'string *editor* " \"" *current-directory* "/" (getf file :name) "\"")))
+     (open-file-with-command path (strcat *editor* " \"" *current-directory* "/" (getf file :name) "\"")))
     (:directory
      (cd (getf file :name)))))
 
@@ -226,11 +225,9 @@
 			    (setf selected-index (mod (1+ selected-index) (length all-files))))
 					; open the current item
 			   ((eq letter #\')
-			    (termbox:shutdown)
-			    (print selected-index)
-			    ;(action (nth selected-index all-files) *current-directory*)
-			    (action 0 *current-directory*)
+			    (action (nth selected-index all-files) *current-directory*)
 			    (setf mode *default-mode*
+				  all-files ()
 				  selected-files ()
 				  selected-index 0
 				  search-buffer ()))
@@ -247,4 +244,9 @@
 				   (setf search-buffer (to-string (butlast (to-list search-buffer)))
 					 selected-files nil)))
 			      ((eq letter #\')
-			       (action (first selected-files) *current-directory*))))))))))))))))
+			       (action (first selected-files) *current-directory*)
+			       (setf mode *default-mode*
+				     all-files ()
+				     selected-files ()
+				     selected-index 0
+				     search-buffer ()))))))))))))))))
