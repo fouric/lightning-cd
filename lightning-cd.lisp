@@ -23,14 +23,15 @@
 (defparameter *default-mode* :search)
 (defparameter *editor* "nvim")
 (defparameter *lightning-path-file* "/home/grant/Ramdisk/.lightningpath")
+(defparameter *lightning-command-file* "/home/grant/Ramdisk/.lightningcommand")
 (defparameter *current-directory* nil)
 
 (defun get-char-range ()
   "get a string of the characters that are valid to enter in search mode"
   (let ((chars (list #\.)))
     (dotimes (i 255)
-      (if (or (and (>= i (char-code #\a)) (<= i (char-code #\z)))
-	      (and (>= i (char-code #\0)) (<= i (char-code #\9))))
+      (if (or (<= (char-code #\a) i (char-code #\z))
+	      (<= (char-code #\0) i (char-code #\9)))
 	  (nconc chars (list (code-char i)))))
     chars))
 
@@ -42,8 +43,9 @@
 			      (to-list (string-downcase filename))))))
 
 (defun ls (&optional (path *current-directory*))
-  "takes a string as a path and returns a list of lists, with each sublist representing a file and containing a filename and if the file is a directory"
-  (let* ((raw-files (butlast (rest (butlast (split-sequence:split-sequence #\newline (trivial-shell:shell-command (format nil "ls -lA \"~A\"" path)))))))
+  "takes a string as a path and returns a list of plists, with each plist representing a file and containing a filename and file type"
+  (let* ((raw-output (split-sequence:split-sequence #\newline (trivial-shell:shell-command (format nil "ls -lA \"~A\"" path))))
+	 (raw-files (subseq raw-output 1 (- (length raw-output) 2)))
 	 (files (mapcar (lambda (raw)
 			  (let ((name (extract-filename raw)))
 			    (list :type (case (first (to-list (subseq raw 0 1)))
@@ -95,12 +97,19 @@
 (defun show-this-file-p (this-file selected-files)
   (or (null selected-files) (member (getf this-file :clean-name) (mapgetf selected-files :clean-name) :test #'string=)))
 
-(defun write-path (filename path)
+(defun write-data (filename data)
   (with-open-file (out filename
 		       :direction :output
 		       :if-exists :supersede)
     (with-standard-io-syntax
-      (print path out))))
+      (print data out))))
+
+(defun write-string-to-file (filename string)
+  (with-open-file (out filename
+		       :direction :output
+		       :if-exists :supersede)
+    (with-standard-io-syntax
+      (format out "~A" string))))
 
 (defun draw-file-list (ystart yend mode selected-files selected-index file-list)
   "draw the list of selected file-list onto the screen"
@@ -134,15 +143,16 @@
 (defun open-file-with-command (path command)
   "write the current path, close Lightning, and execute the command"
   (termbox:shutdown)
-  (write-path (to-string *lightning-path-file*) path)
-  (trivial-shell:shell-command command)
+  (write-string-to-file *lightning-path-file* path)
+  (write-string-to-file *lightning-command-file* command)
+  (print command)
   (exit))
 
 (defun action (file path)
   "do something with a filename that the user selected"
   (case (getf file :type)
     (:file
-     (open-file-with-command path (concatenate 'string *editor* " \"" *current-directory* (getf file :name) "\"")))
+     (open-file-with-command path (concatenate 'string *editor* " \"" *current-directory* "/" (getf file :name) "\"")))
     (:directory
      (cd (getf file :name)))))
 
@@ -238,5 +248,3 @@
 					 selected-files nil)))
 			      ((eq letter #\')
 			       (action (first selected-files) *current-directory*))))))))))))))))
-
-(lightning)

@@ -1,6 +1,3 @@
-# Byte-compiled / optimized / DLL files
-*.py[cod]
-
 # NeoVim
 .*.swp
 
@@ -11,7 +8,9 @@
 *~
 \#*
 
-# spec files
-*.spec
+# built binary files
+*.elf
 
+# misc stuff we don't want
 error.txt
+build.lisp
