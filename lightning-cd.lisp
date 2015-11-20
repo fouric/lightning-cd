@@ -20,7 +20,6 @@
 						(strcat str " ")) (nthcdr 8
 									  (remove "" (split-sequence:split-sequence #\space string) :test #'string=))))))))
 
-(defparameter *show-deselected-files* nil)
 (defparameter *default-mode* :search)
 (defparameter *editor* "nvim")
 (defparameter *lightning-path-file* "/home/grant/Ramdisk/.lightningpath")
@@ -67,6 +66,10 @@
 (defun pwd ()
   *current-directory*)
 
+(defun mapgetf (files key)
+  (mapcar (lambda (f)
+	    (getf f key)) files))
+
 (defun write-text (x y text-string &optional (fg-bg (cons termbox:+default+ termbox:+default+)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"
   (let ((text (to-list text-string)))
@@ -75,23 +78,24 @@
 
 (defun select-files-in-search-buffer (all-files search-buffer)
   "return a list of selected files by comparing simplified filenames with the search buffer"
-  (remove-if-not (lambda (file)
-		   (string= search-buffer (subseq (filename-clean file) 0 (min (length search-buffer) (length file)))))
-		 (mapcar (lambda (file-object)
-			   (getf file-object :clean-name)) all-files)))
+  (let ((result nil))
+    (dolist (f all-files)
+      (if (string= search-buffer (subseq (getf f :clean-name) 0 (min (length search-buffer) (length (getf f :clean-name)))))
+	  (push f result)))
+    (reverse result)))
 
 (defun get-file-colors (mode selected-files selected-index this-file file-list)
   "return a cons cell containing the foreground and background colors for the given file"
   (cond
-    ((and (eq mode :search) (member (getf this-file :clean-name) selected-files :test #'string=) *show-deselected-files*)
+    ((and (eq mode :search) (member (getf this-file :clean-name) (mapgetf selected-files :clean-name) :test #'string=))
      (cons termbox:+black+ termbox:+white+))
     ((and (eq mode :normal) (equal this-file (nth selected-index file-list)))
      (cons termbox:+black+ termbox:+white+))
     (t
-     (cons 0 0))))
+     (cons termbox:+default+ termbox:+default+))))
 
 (defun show-this-file-p (this-file selected-files)
-  (or *show-deselected-files* (member (getf this-file :clean-name) selected-files :test #'string=) (null selected-files)))
+  (or (null selected-files) (member (getf this-file :clean-name) (mapgetf selected-files :clean-name) :test #'string=)))
 
 (defun write-path (filename path)
   (with-open-file (out filename
@@ -106,13 +110,12 @@
 	(y ystart)
 	(width (apply #'max (mapcar (lambda (f)
 				      (length (coerce f 'list)))
-				    (or selected-files (mapcar (lambda (x) (getf x :name)) file-list))))))
+				    (mapgetf (or selected-files file-list) :name)))))
     (dolist (f file-list)
       (if (= y yend)
 	  (setf y ystart
 		x (+ x width)))
       (when (show-this-file-p f selected-files)
-	
 	(write-text x y (if (eq (getf f :type) :directory)
 			    (strcat (getf f :name) "/")
 			    (getf f :name))
@@ -175,19 +178,16 @@
 	; if we're in search mode with only one selected file, then open it
        (if (and (eq mode :search) (= (length selected-files) 1) (plusp (length search-buffer)))
 	   (progn
-	     (action (nth (position (nth 0 selected-files) all-files :test (lambda (x y)
-									     (string= x (getf y :clean-name)))) all-files) *current-directory*)
+	     (action (first selected-files) *current-directory*)
 	     (setf mode *default-mode*
 		   all-files ()
 		   selected-files ()
 		   selected-index 0
 		   search-buffer ()))
-	   (let ((event (termbox:poll-event)))
-	     (let* ((event-data (termbox:event-data event))
-		    (letter (code-char (getf event-data :ch)))
-		    (keycode (getf event-data :key)))
-	       (termbox:free-event event)
-	       (if (eq (getf event-data :type) termbox:+event-key+)
+	   (let* ((event (termbox:poll-event)))
+	     (if (eq (getf event :type) termbox:+event-key+)
+		 (let ((letter (code-char (getf event :ch)))
+		       (keycode (getf event :key)))
 		   (cond
 		     ((eq keycode termbox:+key-space+)
 		      (let ((result (switch-mode mode selected-index selected-files all-files)))
@@ -218,7 +218,10 @@
 			    (setf selected-index (mod (1+ selected-index) (length all-files))))
 					; open the current item
 			   ((eq letter #\')
-			    (action (nth selected-index all-files) *current-directory*)
+			    (termbox:shutdown)
+			    (print selected-index)
+			    ;(action (nth selected-index all-files) *current-directory*)
+			    (action 0 *current-directory*)
 			    (setf mode *default-mode*
 				  selected-files ()
 				  selected-index 0
@@ -235,6 +238,6 @@
 			       (if (plusp (length (to-list search-buffer)))
 				   (setf search-buffer (to-string (butlast (to-list search-buffer))))))
 			      ((eq letter #\')
-			       (action (nth 0 selected-files) *current-directory*))))))))))))))))
+			       (action (first selected-files) *current-directory*))))))))))))))))
 
 (lightning)
