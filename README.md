@@ -14,17 +14,17 @@ Dependencies
 -----------
 
  - [Termbox](https://github.com/nsf/termbox)
- - A modern Common Lisp implementation with support for (ASDF)[https://common-lisp.net/project/asdf/asdf.html] ([SBCL](http://www.sbcl.org/) is a good choice)
+ - A modern Common Lisp implementation with support for [ASDF](https://common-lisp.net/project/asdf/asdf.html) ([SBCL](http://www.sbcl.org/) is a good choice)
  - [cl-termbox](https://github.com/fouric/cl-termbox)
 
 Installation
 ------------
 
-Copy the Lightning directory to someplace convenient, then add an alias to it, like so:
+Copy the Lightning directory to someplace convenient, build a binary with your favorite Common Lisp compiler (instructions coming for SBCL soon, although it isn't too hard) then add an alias to it, like so:
 
-alias i='sbcl ~/code/lightning-cd/lightning-cd.lisp ~/.lightningpath && cd "\`cat ~/.lightningpath\`"'
+    alias i='~/code/lightning-cd/lightning-cd.elf && cd "`cat ~/.lightningpath`" && bash -c "`cat ~/.lightningcommand`"'
 
-Lightning takes as its primary argument the path of a file to write a directory path to. While quitting, Lightning will write the current working directory to that file, and if you have an alias set up similar to the above, then your shell should move to the directory where Lightning quit.
+Because I currently can't find an easy way to exec directly from Lisp to an external command, or to change the invoking shell's current working directory, Lightning writes to two files: `.lightningpath`, which contains a path to `cd` to, and `.lightningcommand`, which contains a command to invoke (usually your text editor, although Lightning will soon be able to invoke other utilities).
 
 Usage
 -----
