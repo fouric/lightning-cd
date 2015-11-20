@@ -14,17 +14,19 @@
 (defun strcat (first &rest others)
   (apply #'concatenate 'string first others))
 
+
+(defparameter *default-mode* :search)
+(defparameter *editor* "nvim")
+(defparameter *lightning-initial-path-file* "/home/grant/Ramdisk/.lightninginitialpath")
+(defparameter *lightning-path-file* "/home/grant/Ramdisk/.lightningpath")
+(defparameter *lightning-command-file* "/home/grant/Ramdisk/.lightningcommand")
+(defparameter *current-directory* nil)
+
 (defun extract-filename (string)
   (to-string (butlast (to-list (apply #'concatenate 'string
 				      (mapcar (lambda (str)
 						(strcat str " ")) (nthcdr 8
 									  (remove "" (split-sequence:split-sequence #\space string) :test #'string=))))))))
-
-(defparameter *default-mode* :search)
-(defparameter *editor* "nvim")
-(defparameter *lightning-path-file* "/home/grant/Ramdisk/.lightningpath")
-(defparameter *lightning-command-file* "/home/grant/Ramdisk/.lightningcommand")
-(defparameter *current-directory* nil)
 
 (defun get-char-range ()
   "get a string of the characters that are valid to enter in search mode"
@@ -63,8 +65,6 @@
   "modifies a special variable that corresponds to the current path"
   (setf *current-directory* (to-string (butlast (to-list (trivial-shell:shell-command (strcat "cd \"" *current-directory* "\";cd \"" path "\";pwd")))))))
 
-(cd ".")
-
 (defun pwd ()
   *current-directory*)
 
@@ -88,14 +88,24 @@
 
 (defun get-file-colors (mode selected-index this-file file-list)
   "return a cons cell containing the foreground and background colors for the given file"
-  (cond
-    ((and (eq mode :normal) (string= (getf this-file :clean-name) (getf (nth selected-index file-list) :clean-name)))
-     (cons termbox:+black+ termbox:+white+))
-    (t
-     (cons termbox:+default+ termbox:+default+))))
+  (let ((fg termbox:+default+)
+	(bg termbox:+default+))
+    (if (and (eq mode :normal) (string= (getf this-file :clean-name) (getf (nth selected-index file-list) :clean-name)))
+	(setf fg termbox:+black+
+	      bg termbox:+white+))
+    (if (eq (getf this-file :type) :directory)
+	(setf fg termbox:+blue+))
+    (cons fg bg)))
 
 (defun show-this-file-p (this-file selected-files)
   (or (null selected-files) (member (getf this-file :clean-name) (mapgetf selected-files :clean-name) :test #'string=)))
+
+(defun read-string-from-file (filename)
+  (with-open-file (in filename
+		      :direction :input
+		      :if-exists :supersede)
+    (with-standard-io-syntax
+      (read-line in))))
 
 (defun write-data (filename data)
   (with-open-file (out filename
@@ -162,6 +172,7 @@
 	(selected-index 0)
 	(all-files ())
 	(char-range (get-char-range)))
+    (cd (read-string-from-file *lightning-initial-path-file*))
     (termbox:init)
     (loop
 	; if files is nil, then we've nuked the buffer because of a cd or something; time to regenerate!
