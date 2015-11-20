@@ -4,6 +4,11 @@
 
 Lightning is a tool designed to allow you to find and open files as fast as physically possible.  It acts as a complement to autojump (https://github.com/wting/autojump); while autojump allows you to go from anywhere to your most accessed directories with just a few keystrokes, Lightning allows you to fly around your filesystem with reckless abandon, flitting through directories and opening files with ease.
 
+GLASS
+-----
+
+This is the "glass" branch of Lightning, which contains modifications designed to make Lightning even faster (and possibly more useful) at the expensive of memory usage, flexibility, and robustness. If you are unhappy with these tradeoffs, you should probably use the main branch.
+
 Dependencies
 -----------
 
@@ -42,14 +47,12 @@ Normal keybindings:
 All of the above keybindings can (and should) be changed by editing keybindings.py.
 
 Settings in settings.py:
- - showDeselectedFiles controls the visibility of filenames that don't match the search buffer
  - defaultMode sets the default mode for startup and mode switches
  - fileBrowser is the file browser opened when the file browser shortcut ('f' by default) is pressed
  - persistentMode, if set, causes the current mode to stay the same on directory change
  - lightningPathFile is the path of the file that Lightning writes the directory that should be cd'ed to
  - showHiddenFiles sets the default visibility of hidden files
  - hiddenFilesPattern is the regexp (Python3 re module) that, if matched, declares a pathname (works for files and directories) to be "hidden"
- - restrictBuffer, if set, will cause the search buffer to refuse to accept characters that don't match at least one existing pathname
  - mimePatterns tells Lightning, using mimetypes, how to handle files when told to open them
 
 One of the basic assumptions behind Lightning is that you'll be spending most of your time in search mode, and only switching to normal mode to select files that would otherwise require a (relatively) large number of keystrokes. You may violate this assumption if you wish, at which point you will discover that you are using a watered-down `mc` (http://www.midnight-commander.org/). Play off Lightning's strengths, avoid its weaknesses (or use another tool), and you may find yourself enjoying productivity gains due to lower mental costs associated with switching source code files.
