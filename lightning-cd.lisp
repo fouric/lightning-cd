@@ -84,11 +84,9 @@
 	  (push f result)))
     (reverse result)))
 
-(defun get-file-colors (mode selected-files selected-index this-file file-list)
+(defun get-file-colors (mode selected-index this-file file-list)
   "return a cons cell containing the foreground and background colors for the given file"
   (cond
-    ((and (eq mode :search) (member (getf this-file :clean-name) (mapgetf selected-files :clean-name) :test #'string=))
-     (cons termbox:+black+ termbox:+white+))
     ((and (eq mode :normal) (equal this-file (nth selected-index file-list)))
      (cons termbox:+black+ termbox:+white+))
     (t
@@ -108,9 +106,9 @@
   "draw the list of selected file-list onto the screen"
   (let ((x 0)
 	(y ystart)
-	(width (apply #'max (mapcar (lambda (f)
-				      (length (coerce f 'list)))
-				    (mapgetf (or selected-files file-list) :name)))))
+	(width (1+ (apply #'max (mapcar (lambda (f)
+					  (length (coerce f 'list)))
+					(mapgetf (or selected-files file-list) :name))))))
     (dolist (f file-list)
       (if (= y yend)
 	  (setf y ystart
@@ -119,7 +117,7 @@
 	(write-text x y (if (eq (getf f :type) :directory)
 			    (strcat (getf f :name) "/")
 			    (getf f :name))
-		    (get-file-colors mode selected-files selected-index (nth selected-index file-list) file-list))
+		    (get-file-colors mode selected-index (nth selected-index file-list) file-list))
 	(incf y)))))
 
 (defun switch-mode (prev-mode selected selected-files files)
@@ -236,7 +234,8 @@
 			       (setf search-buffer (strcat search-buffer (to-string (list letter)))))
 			      ((eq letter #\-)
 			       (if (plusp (length (to-list search-buffer)))
-				   (setf search-buffer (to-string (butlast (to-list search-buffer))))))
+				   (setf search-buffer (to-string (butlast (to-list search-buffer)))
+					 selected-files nil)))
 			      ((eq letter #\')
 			       (action (first selected-files) *current-directory*))))))))))))))))
 
