@@ -45,16 +45,14 @@ def selectFilesOnsearchBuffer(files, searchBuffer):
     return selected
 
 def getFileColors(mode, selected, thisFile, fileList):
-    if mode == Mode.SEARCH and thisFile in selected and showDeselectedFiles:
-        fg, bg = termbox.BLACK, termbox.WHITE
-    elif mode == Mode.NORMAL and thisFile == fileList[selected]:
+    if mode == Mode.NORMAL and thisFile == fileList[selected]:
         fg, bg = termbox.BLACK, termbox.WHITE
     else:
         fg, bg = termbox.BLUE if os.path.isdir(thisFile) else termbox.WHITE, 0
     return (fg, bg)
 
 def showThisFile(thisFile, mode, selected):
-    return showDeselectedFiles or mode == Mode.NORMAL or thisFile in selected or selected == []
+    return mode == Mode.NORMAL or thisFile in selected or selected == []
 
 def writePath(filename, path):
     f = open(filename, 'w+')

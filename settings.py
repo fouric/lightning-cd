@@ -1,7 +1,6 @@
 import os
 from enum import Enum
 
-showDeselectedFiles = False
 Mode = Enum('Mode', 'NORMAL SEARCH')
 defaultMode = Mode.SEARCH
 fileBrowser = 'nautilus'
