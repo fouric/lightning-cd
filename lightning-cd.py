@@ -193,7 +193,7 @@ if __name__ == '__main__':
             elif mode == Mode.SEARCH:
                 if letter:
                     if letter in charRange:
-                        if not restrictBuffer or (searchBuffer + letter) in list(map(slicer(len(searchBuffer) + 1), map(filenameClean, files))):
+                        if (searchBuffer + letter) in list(map(slicer(len(searchBuffer) + 1), map(filenameClean, files))):
                             searchBuffer = searchBuffer + letter
                     elif letter == keybindings.KEY_DELETE:
                         searchBuffer = searchBuffer[:-1]
