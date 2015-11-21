@@ -30,13 +30,18 @@
 						(strcat str " ")) (nthcdr 8
 									  (remove "" (split-sequence:split-sequence #\space string) :test #'string=))))))))
 
+(defun is-acceptable-char (char)
+  (let ((code (char-code char)))
+    (or (eq char #\.)
+	(<= (char-code #\a) code (char-code #\z))
+	(<= (char-code #\0) code (char-code #\9)))))
+
 (defun get-char-range ()
   "get a string of the characters that are valid to enter in search mode"
-  (let ((chars (list #\.)))
+  (let ((chars nil))
     (dotimes (i 255)
-      (if (or (<= (char-code #\a) i (char-code #\z))
-	      (<= (char-code #\0) i (char-code #\9)))
-	  (nconc chars (list (code-char i)))))
+      (if (is-acceptable-char (code-char i))
+	  (push (code-char i) chars)))
     chars))
 
 (defun filename-clean (filename)
@@ -148,8 +153,7 @@
 	(selected-files ())
 	(search-buffer ())
 	(selected-index 0)
-	(all-files ())
-	(char-range (get-char-range)))
+	(all-files ()))
     (flet ((clear-search-state ()
 	     (setf mode *default-mode*
 		   all-files ()
@@ -182,7 +186,7 @@
 	     (progn
 	       (action (first selected-files) *current-directory*)
 	       (clear-search-state))
-	     (let* ((event (termbox:poll-event)))
+	     (let ((event (termbox:poll-event)))
 	       (if (eq (getf event :type) termbox:+event-key+)
 		   (let ((letter (code-char (getf event :ch)))
 			 (keycode (getf event :key)))
@@ -221,15 +225,17 @@
 			     ((eq letter #\v)
 			      (open-file-with-command *current-directory* (strcat *editor* " " (nth selected-index all-files))))))
 			  ((eq mode :search)
-			   (cond
-			     (letter
-			      (cond
-				((member letter char-range)
-				 (setf search-buffer (strcat search-buffer (to-string (list letter)))))
-				((eq letter #\-)
-				 (if (plusp (length (to-list search-buffer)))
-				     (setf search-buffer (to-string (butlast (to-list search-buffer)))
-					   selected-files nil)))
-				((eq letter #\')
-				 (action (first selected-files) *current-directory*)
-				 (clear-search-state)))))))))))))))))
+			   (when letter
+			     (let ((new-selection (select-files-in-search-buffer (or selected-files all-files) (strcat (or search-buffer "") (to-string (list letter))))))
+			       (cond
+				 ((and (is-acceptable-char letter) new-selection)
+				  (setf search-buffer (strcat (or search-buffer "") (to-string (list letter)))
+					selected-files new-selection))
+				 ((eq letter #\-)
+				  (if (plusp (length search-buffer))
+				      (let ((new-search-buffer (subseq search-buffer 0 (1- (length search-buffer)))))
+					(setf search-buffer (if (string= new-search-buffer "") nil new-search-buffer)
+					      selected-files nil))))
+				 ((eq letter #\')
+				  (action (first selected-files) *current-directory*)
+				  (clear-search-state)))))))))))))))))
