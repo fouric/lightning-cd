@@ -99,7 +99,7 @@
   "return a cons cell containing the foreground and background colors for the given file"
   (let ((fg termbox:+default+)
 	(bg termbox:+default+))
-    (if (and (eq mode :normal) (string= (getf this-file :clean-name) (getf (nth selected-index file-list) :clean-name)))
+    (if (and (eq mode :normal) (eq this-file (nth selected-index file-list)))
 	(setf fg termbox:+black+
 	      bg termbox:+white+))
     (if (eq (getf this-file :type) :directory)
