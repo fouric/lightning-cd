@@ -7,6 +7,7 @@
 # Emacs
 *~
 \#*
+.\#*
 
 # built binary files
 *.elf
