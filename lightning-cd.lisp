@@ -62,7 +62,7 @@
 	 (raw-files (subseq raw-output 1 (- (length raw-output) 2))))
     (mapcar (lambda (raw)
 	      (let ((name (extract-filename raw))
-		    (type (case (first (to-list (subseq raw 0 1)))
+		    (type (case (schar raw 0)
 			    (#\- :file)
 			    (#\d :directory)
 			    (#\p :fifo)
@@ -83,9 +83,8 @@
 
 (defun write-text (x y text-string &optional (fg-bg (cons termbox:+default+ termbox:+default+)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"
-  (let ((text (to-list text-string)))
-    (dotimes (i (length text))
-      (termbox:change-cell (+ x i) y (char-code (nth i (to-list text))) (car fg-bg) (cdr fg-bg)))))
+  (dotimes (i (length text-string))
+    (termbox:change-cell (+ x i) y (char-code (schar text-string i)) (car fg-bg) (cdr fg-bg))))
 
 (defun select-files-in-search-buffer (all-files search-buffer)
   "return a list of selected files by comparing simplified filenames with the search buffer"
