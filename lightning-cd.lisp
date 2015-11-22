@@ -148,6 +148,28 @@
     (:directory
      (cd (getf file :name)))))
 
+(defun event-to-symbol (event)
+  (when (eq (getf event :type) termbox:+event-key+)
+    (if (not (zerop (getf event :ch)))
+	(code-char (getf event :ch))
+	(getf event :key))))
+(defparameter *bindings* `(:bindings
+			   (,termbox:+key-space+ :toggle-mode
+						 #\' :open-path
+						 #\; :quit
+						 #\, :up-one-dir)
+			   :submodes
+			   (:normal
+			    (:bindings
+			     (#\j :select-down
+				  #\k :select-up)))
+			   (:search
+			    (:bindings
+			     (#\- :delete-char)))))
+(defun symbol-to-action (symbol mode bindings)
+  (or (getf (getf bindings :bindings) symbol)
+      (getf (getf (getf (getf bindings :submodes) mode) :bindings) symbol)))
+
 (defun lightning ()
   (let ((mode *default-mode*)
 	(selected-files ())
@@ -187,55 +209,36 @@
 	       (action (first selected-files) *current-directory*)
 	       (clear-search-state))
 	     (let ((event (termbox:poll-event)))
+	       (case (symbol-to-action (event-to-symbol event) mode *bindings*)
+		 (:toggle-mode
+		  (let ((result (switch-mode mode selected-index selected-files all-files)))
+		    (setf mode (nth 0 result)
+			  selected-index (nth 1 result)
+			  selected-files ()
+			  search-buffer ())))
+		 (:up-one-dir
+		  (cd "..")
+		  (setf search-buffer ()
+			all-files ()
+			selected-index 0))
+		 (:quit
+		  (open-file-with-command *current-directory* "true"))
+		 (:select-down
+		  (setf selected-index (mod (1- selected-index) (length all-files))))
+		 (:select-up
+		  (setf selected-index (mod (1+ selected-index) (length all-files))))
+		 (:open-path
+		  (action (nth selected-index all-files) *current-directory*)
+		  (clear-search-state))
+		 (:delete-char
+		  (if (plusp (length search-buffer))
+		      (let ((new-search-buffer (subseq search-buffer 0 (1- (length search-buffer)))))
+			(setf search-buffer (if (string= new-search-buffer "") nil new-search-buffer)
+			      selected-files nil)))))
 	       (if (eq (getf event :type) termbox:+event-key+)
-		   (let ((letter (code-char (getf event :ch)))
-			 (keycode (getf event :key)))
-		     (cond
-		       ((eq keycode termbox:+key-space+)
-			(let ((result (switch-mode mode selected-index selected-files all-files)))
-			  (setf mode (nth 0 result)
-				selected-index (nth 1 result)
-				selected-files ()
-				search-buffer ())))
-		       ((not (equal letter #\Null))
-			(cond
-			  ((eq letter #\,)
-			   (cd "..")
-			   (setf search-buffer ()
-				 all-files ()
-				 selected-index 0))
-			  ((eq letter #\;)
-			   (open-file-with-command *current-directory* "true"))
-					; switch modes
-			  
-					; quit to the current directory
-					; normal-mode-specific commands
-			  ((eq mode :normal)
-			   (cond
-					; move up one item
-			     ((eq letter #\k)
-			      (setf selected-index (mod (1- selected-index) (length all-files))))
-					; move down one item
-			     ((eq letter #\j)
-			      (setf selected-index (mod (1+ selected-index) (length all-files))))
-					; open the current item
-			     ((eq letter #\')
-			      (action (nth selected-index all-files) *current-directory*)
-			      (clear-search-state))
-			     ((eq letter #\v)
-			      (open-file-with-command *current-directory* (strcat *editor* " " (nth selected-index all-files))))))
-			  ((eq mode :search)
-			   (when letter
-			     (let ((new-selection (select-files-in-search-buffer (or selected-files all-files) (strcat (or search-buffer "") (to-string (list letter))))))
-			       (cond
-				 ((and (is-acceptable-char letter) new-selection)
-				  (setf search-buffer (strcat (or search-buffer "") (to-string (list letter)))
-					selected-files new-selection))
-				 ((eq letter #\-)
-				  (if (plusp (length search-buffer))
-				      (let ((new-search-buffer (subseq search-buffer 0 (1- (length search-buffer)))))
-					(setf search-buffer (if (string= new-search-buffer "") nil new-search-buffer)
-					      selected-files nil))))
-				 ((eq letter #\')
-				  (action (first selected-files) *current-directory*)
-				  (clear-search-state)))))))))))))))))
+		   (let ((letter (code-char (getf event :ch))))
+		     (if (and (not (equal letter #\Null)) (eq mode :search))
+		      (let ((new-selection (select-files-in-search-buffer (or selected-files all-files) (strcat (or search-buffer "") (to-string (list letter))))))
+			(if (and (is-acceptable-char letter) new-selection)
+			    (setf search-buffer (strcat (or search-buffer "") (to-string (list letter)))
+				  selected-files new-selection))))))))))))
