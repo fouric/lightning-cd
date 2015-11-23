@@ -8,7 +8,7 @@ Lightning is a tool designed to allow you to find and open files as fast as phys
 Disclaimer
 ---------
 
-This is the Common Lisp branch of Lightning, and is currently virtually unusable. The original version is written in Python, and is _much_ more fast, stable, and powerful than the Lisp version; if you want to actually _use_ Lightning, then you should use the Python branch, as I do. However, I plan to make this branch the primary one as soon as it works reasonably well, so you might want to be prepared to migrate sometime in the near future.
+This is the Common Lisp branch of Lightning, and is currently not quite ready for production use just yet. The original version is written in Python, and is much more fast, stable, and powerful than the Lisp version; if you want to use Lightning, then you're probably better off using the Python branch until things get just a bit more stable here. However, I plan to make this branch the primary one as soon as it works reasonably well, so you might want to be prepared to migrate sometime in the near future.
 
 Dependencies
 -----------
