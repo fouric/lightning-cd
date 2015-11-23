@@ -7,8 +7,8 @@
 			   (:normal
 			    (:bindings
 			     (#\j :select-down
-				  #\k :select-up)))
-			   (:search
+				  #\k :select-up))
+			    :search
 			    (:bindings
 			     (#\- :delete-char)))))
 
