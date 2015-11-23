@@ -93,9 +93,7 @@
 			  search-buffer ())))
 		 (:up-one-dir
 		  (setf *current-directory* (cd ".." *current-directory*))
-		  (setf search-buffer ()
-			all-files ()
-			selected-index 0))
+		  (clear-search-state))
 		 (:quit
 		  (open-file-with-command *current-directory* "true"))
 		 (:select-down
