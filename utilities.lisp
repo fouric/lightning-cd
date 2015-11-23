@@ -22,3 +22,13 @@
 (defun mapgetf (files key)
   (mapcar (lambda (f)
 	    (getf f key)) files))
+
+
+(defun to-list (item)
+  (coerce item 'list))
+
+(defun to-string (item)
+  (coerce item 'string))
+
+(defun strcat (first &rest others)
+  (apply #'concatenate 'string first others))
