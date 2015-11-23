@@ -4,13 +4,17 @@
 # NeoVim
 .*.swp
 
-# Lisp
+# Lisp (Lisp development is happening in a separate branch)
 *.fasl
+*.lisp
 
 # Emacs
 *~
 
 # spec files
 *.spec
+
+# binary files
+*.elf
 
 error.txt
