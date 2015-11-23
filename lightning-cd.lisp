@@ -1,4 +1,3 @@
-(asdf:load-system :split-sequence)
 (asdf:load-system :cl-termbox)
 
 (load "utilities.lisp")

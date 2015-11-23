@@ -1,4 +1,5 @@
 (asdf:load-system :trivial-shell)
+(asdf:load-system :split-sequence)
 
 (load "filter.lisp")
 
