@@ -97,9 +97,9 @@
 		 (:quit
 		  (open-file-with-command *current-directory* "true"))
 		 (:select-down
-		  (setf selected-index (mod (1- selected-index) (length all-files))))
-		 (:select-up
 		  (setf selected-index (mod (1+ selected-index) (length all-files))))
+		 (:select-up
+		  (setf selected-index (mod (1- selected-index) (length all-files))))
 		 (:open-path
 		  (action (nth selected-index all-files) *current-directory*)
 		  (clear-search-state))
