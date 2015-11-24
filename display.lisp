@@ -3,7 +3,7 @@
 (defun write-text (x y text-string &optional (fg-bg (cons termbox:+default+ termbox:+default+)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"
   (dotimes (i (length text-string))
-    (termbox:change-cell (+ x i) y (char-code (schar text-string i)) (car fg-bg) (cdr fg-bg))))
+    (termbox:change-cell (+ x i) y (schar text-string i) (car fg-bg) (cdr fg-bg))))
 
 (defun get-file-colors (mode selected-index this-file file-list)
   "return a cons cell containing the foreground and background colors for the given file"
