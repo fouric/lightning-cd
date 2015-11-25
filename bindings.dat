@@ -1,0 +1,13 @@
+(:bindings
+ (termbox:+key-space+ :toggle-mode
+  #\' :open-path
+  #\; :quit
+  #\, :up-one-dir)
+ :submodes
+  (:normal
+   (:bindings
+    (#\j :select-down
+     #\k :select-up))
+   :search
+    (:bindings
+     (#\- :delete-char))))

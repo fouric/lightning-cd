@@ -84,6 +84,8 @@
 	       (clear-search-state))
 	     (let ((event (termbox:poll-event)))
 	       (case (symbol-to-action (event-to-symbol event) mode *bindings*)
+		 (:refresh-file-list
+		  (clear-search-state))
 		 (:toggle-mode
 		  (let ((result (switch-mode mode selected-index selected-files all-files)))
 		    (setf mode (nth 0 result)

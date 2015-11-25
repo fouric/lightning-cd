@@ -15,7 +15,8 @@
 						    (termbox:+key-space+ :toggle-mode
 						     #\' :open-path
 						     #\; :quit
-						     #\, :up-one-dir)
+						     #\, :up-one-dir
+						     #\" :refresh-file-list)
 						    :submodes
 						    (:normal
 						     (:bindings
