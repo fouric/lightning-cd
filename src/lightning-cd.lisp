@@ -123,3 +123,7 @@
 (defun main (args)
   (declare (ignore args))
   (lightning-cd))
+
+(defun cl-user::dewit ()
+  (ql:quickload :lightning-cd)
+  (funcall (intern "LIGHTNING-CD" :lightning-cd)))
