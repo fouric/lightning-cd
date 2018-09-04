@@ -4,28 +4,28 @@
 
 (defun extract-filename (string)
   (to-string (butlast (to-list (apply #'concatenate 'string
-				      (mapcar (lambda (str)
-						(strcat str " ")) (nthcdr 8
-									  (remove "" (split-sequence:split-sequence #\space string) :test #'string=))))))))
+                                      (mapcar (lambda (str)
+                                                (strcat str " ")) (nthcdr 8
+                                                                          (remove "" (split-sequence:split-sequence #\space string) :test #'string=))))))))
 
 (defun generate-print-name (filename type)
   (strcat filename (case type
-		     (:file "")
-		     (:directory "/"))))
+                     (:file "")
+                     (:directory "/"))))
 
 (defun ls-line-to-file (line)
   (let ((name (extract-filename line))
-	(type (case (schar line 0)
-		(#\- :file)
-		(#\d :directory)
-		(#\p :fifo)
-		(#\c :char-device)
-		(#\l :link)
-		(#\b :block-device))))
+        (type (case (schar line 0)
+                (#\- :file)
+                (#\d :directory)
+                (#\p :fifo)
+                (#\c :char-device)
+                (#\l :link)
+                (#\b :block-device))))
     (list :type type
-	  :name name
-	  :clean-name (filename-clean name)
-	  :print-name (generate-print-name name type))))
+          :name name
+          :clean-name (filename-clean name)
+          :print-name (generate-print-name name type))))
 
 (defun ls (path)
   "takes a string as a path and returns a list of plists, with each plist representing a file and containing a filename and file type"
