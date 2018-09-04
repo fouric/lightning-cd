@@ -14,5 +14,9 @@
 
 # misc stuff we don't want
 error.txt
+lightning-error.txt
+lightning.txt
 build.lisp
 __*
+*.png
+*.pyc
