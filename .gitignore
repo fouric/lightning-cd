@@ -17,4 +17,8 @@
 # binary files
 *.elf
 
+# misc
 error.txt
+lightning.txt
+lightning-error.txt
+*.png
