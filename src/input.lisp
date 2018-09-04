@@ -1,4 +1,6 @@
-(asdf:load-system :cl-termbox)
+(in-package :lightning-cd)
+
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
 
 (defun resolve-termbox-symbols (list)
   (mapcar (lambda (item)

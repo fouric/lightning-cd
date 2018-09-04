@@ -1,3 +1,7 @@
+(in-package :lightning-cd)
+
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
+
 (defun read-string-from-file (filename)
   (with-open-file (in filename
 		      :direction :input

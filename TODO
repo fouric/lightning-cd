@@ -1,9 +1,0 @@
-Implement scrolling/paging for large directory listings
-Implement vertical scrolling for normal mode
-Consider fuzzy search or rankings in terms of string length
-Color (using mimetypes)?
-Rearrange hidden files so that they are intermingled with normal files (for non-dotfiles such as fasls)
-Just throw all pretense of modularity to the wind and make the entire thing a big state machine
-Add a preview pane when in select mode (thanks to Mithaldu on HN)
-
-BUGFIX: exec'ing to a process and then using another Lightning instance will cause the exec'd instance to cd to the wrong directory. Fix or edge case? Solution: Use a directory-stack-based dirwrite file.

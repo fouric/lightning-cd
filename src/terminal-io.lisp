@@ -1,8 +1,6 @@
-(asdf:load-system :trivial-shell)
-(asdf:load-system :split-sequence)
+(in-package :lightning-cd)
 
-(load "filter.lisp")
-(load "utilities.lisp")
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
 
 (defun extract-filename (string)
   (to-string (butlast (to-list (apply #'concatenate 'string

@@ -1,3 +1,7 @@
+(in-package :lightning-cd)
+
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
+
 (defun is-acceptable-char (char)
   (let ((code (char-code char)))
     (or (eq char #\.)

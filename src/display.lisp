@@ -1,4 +1,6 @@
-(asdf:load-system :cl-termbox)
+(in-package :lightning-cd)
+
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
 
 (defun write-text (x y text-string &optional (fg-bg (cons termbox:+default+ termbox:+default+)))
   "execute a series of change-cell's in a sequential manner such as to write a line of text"

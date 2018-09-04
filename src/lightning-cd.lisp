@@ -1,14 +1,6 @@
-(asdf:load-system :cl-termbox)
+(in-package :lightning-cd)
 
-(load "utilities.lisp")
-(load "input.lisp")
-(load "terminal-io.lisp")
-(load "display.lisp")
-(load "filter.lisp")
-
-(declaim (optimize (debug 2)))
-(declaim (optimize (speed 0)))
-
+(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
 
 (defparameter *default-mode* :search)
 (defparameter *editor* "nvim")
@@ -44,7 +36,7 @@
     (:directory
      (setf *current-directory* (cd (getf file :name) *current-directory*)))))
 
-(defun lightning ()
+(defun lightning-cd ()
   (let ((mode *default-mode*)
 	(selected-files ())
 	(search-buffer ())
