@@ -23,6 +23,7 @@
 
 (defun draw-file-list (ystart yend mode selected-files selected-index file-list)
   "draw the list of selected file-list onto the screen"
+  (declare (ignore mode selected-index))
   (let ((x 0)
         (y ystart)
         (width (1+ (apply #'max (mapcar #'length (mapgetf (or selected-files file-list) :print-name))))))
@@ -31,5 +32,5 @@
           (setf y ystart
                 x (+ x width)))
       (when (show-this-file-p f selected-files)
-        (write-text x y (getf f :print-name) (get-file-colors mode selected-index f file-list))
+        (charms:write-string-at-point charms:*standard-window* (getf f :print-name) x y #++(get-file-colors mode selected-index f file-list))
         (incf y)))))
