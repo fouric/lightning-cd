@@ -108,3 +108,7 @@
 			(if (and (is-acceptable-char letter) new-selection)
 			    (setf search-buffer (strcat (or search-buffer "") (to-string (list letter)))
 				  selected-files new-selection))))))))))))
+
+(defun main (args)
+  (declare (ignore args))
+  (lightning-cd))
