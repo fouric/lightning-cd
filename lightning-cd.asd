@@ -17,6 +17,7 @@
   :depends-on (:cl-termbox :split-sequence :trivial-shell :cl-charms)
   :pathname "src"
   :components ((:file "package")
+               (:file "globals")
                (:file "display")
                (:file "filter")
                (:file "input")

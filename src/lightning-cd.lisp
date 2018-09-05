@@ -2,14 +2,6 @@
 
 (proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
 
-(defparameter *default-mode* :search)
-(defparameter *editor* "nvim")
-(defparameter *lightning-initial-path-file* "/home/fouric/ramdisk/.lightninginitialpath")
-(defparameter *lightning-path-file* "/home/fouric/ramdisk/.lightningpath")
-(defparameter *lightning-command-file* "/home/fouric/ramdisk/.lightningcommand")
-(defparameter *current-directory* nil)
-
-
 (defun switch-mode (prev-mode selected selected-files files)
   "switch the mode to either search or normal and do associated setup for each mode"
   (let ((new-mode nil))
@@ -49,7 +41,7 @@
                    selected-files ()
                    selected-index 0
                    search-buffer ())))
-      (setf *current-directory* (cd (read-string-from-file *lightning-initial-path-file*) *current-directory*))
+      (setf *current-directory* (or (cd (read-string-from-file *lightning-initial-path-file*) *current-directory*) (namestring *default-pathname-defaults*)))
 
       (charms:with-curses ()
         (charms:disable-echoing)
@@ -73,10 +65,10 @@
                          (setf selected-files (select-files-in-search-buffer all-files search-buffer)))
 
                     ;; draw the current mode, current directory, file list, and search buffer, respectively
-                    (write-text 0 0 (strcat (string mode) ": " *current-directory*))
+                    (charms:write-string-at-point charms:*standard-window* (strcat (string mode) ": " *current-directory*) 0 0)
                     (draw-file-list 1 (1- height) mode selected-files selected-index all-files)
                     (if (eq mode :search)
-                        (write-text 0 (1- width) search-buffer))
+                        (charms:write-string-at-point charms:*standard-window* (or search-buffer "") 0 (1- height)))
 
                     (charms:refresh-window charms:*standard-window*)
 
