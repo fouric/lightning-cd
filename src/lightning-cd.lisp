@@ -29,6 +29,7 @@
 (defun write-string-at (string x y &optional colors)
   (if colors
       (with-color colors
+        ;; TODO: port over string clamping code from mercury/monolith
         (charms:write-string-at-point *charms-win* string (clamp-w x) (clamp-h y)))
       (charms:write-string-at-point *charms-win* string (clamp-w x) (clamp-h y)))
   (length string))
@@ -113,7 +114,7 @@
 (defun main-loop (buffer)
   (f:update-swank)
   (multiple-value-bind (width height) (charms:window-dimensions *charms-win*)
-    (setf *screen-width* width
+    (setf *screen-width* (1- width)
           *screen-height* height))
   (let ((char (charms:get-char *charms-win* :ignore-error t)))
     (when char
@@ -127,7 +128,7 @@
          (setf buffer (append-char buffer char))
          (format t "buffer is now ~s~%" buffer))))
     (charms:clear-window *charms-win* :force-repaint t)
-    (write-string-at buffer 1 1 +color-white-black+)
+    (write-string-at (concatenate 'string "> " buffer) 1 (1- *screen-height*) +color-white-black+)
     (charms:refresh-window *charms-win*)
     (main-loop buffer)))
 
