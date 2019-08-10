@@ -1,121 +1,140 @@
 (in-package :lightning-cd)
 
-(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
+;; TODO: these don't actually do anything unless you set *screen-width* and *screen-height* - and currently, you don't!
+(defparameter *screen-width* 1)
+(defparameter *screen-height* 1)
+(defun clamp-w (x)
+  (clamp x 0 (1- *screen-width*)))
+(defun clamp-h (y)
+  (clamp y 0 (1- *screen-height*)))
 
-(defun switch-mode (prev-mode selected selected-files files)
-  "switch the mode to either search or normal and do associated setup for each mode"
-  (let ((new-mode nil))
-    (if (eq prev-mode :search)
-        (setf selected (if (plusp (length selected-files))
-                           (position (nth 0 selected-files) files)
-                           0)
-              new-mode :normal)
-        (setf new-mode :search))
-    (list new-mode selected)))
+(defmacro defcolors (&rest colors)
+  `(progn
+     ,@(iterate (for n :from 0)
+                (for (constant nil nil) :in colors)
+                (collect `(defparameter ,constant ,n)))
+     (defun init-colors ()
+       ,@(iterate
+           (for (constant fg bg) :in colors)
+           (collect `(charms/ll:init-pair ,constant ,fg ,bg))))))
 
-(defun open-file-with-command (path command)
-  "write the current path, close Lightning, and execute the command"
-  (write-string-to-file *lightning-path-file* path)
-  (write-string-to-file *lightning-command-file* command)
-  (sb-ext:exit))
+(defmacro with-color (color &body body)
+  (alexandria:once-only (color)
+    `(unwind-protect
+          (progn
+            (charms/ll:attron (charms/ll:color-pair ,color))
+            ,@body)
+       (charms/ll:attroff (charms/ll:color-pair ,color)))))
 
-(defun action (file path)
-  "do something with a filename that the user selected"
-  (case (getf file :type)
-    (:file
-     (open-file-with-command path (strcat *editor* " \"" *current-directory* "/" (getf file :name) "\"")))
-    (:directory
-     (setf *current-directory* (cd (getf file :name) *current-directory*)))))
+(defun write-string-at (string x y &optional colors)
+  (if colors
+      (with-color colors
+        (charms:write-string-at-point *charms-win* string (clamp-w x) (clamp-h y)))
+      (charms:write-string-at-point *charms-win* string (clamp-w x) (clamp-h y)))
+  (length string))
+
+(defcolors
+    ;; need some way of, when this is recompiled, patching it into running instance
+
+    ;; white
+    (+color-white-black+  charms/ll:COLOR_WHITE   charms/ll:COLOR_BLACK)
+    (+color-black-white+  charms/ll:COLOR_BLACK charms/ll:COLOR_WHITE)
+
+  ;; blue
+  (+color-blue-black+   charms/ll:COLOR_BLUE    charms/ll:COLOR_BLACK)
+  (+color-black-blue+   charms/ll:COLOR_BLACK charms/ll:COLOR_BLUE)
+  (+color-white-blue+   charms/ll:COLOR_WHITE charms/ll:COLOR_BLUE)
+  (+color-blue-white+   charms/ll:COLOR_BLUE charms/ll:COLOR_WHITE)
+
+  ;; cyan
+  (+color-cyan-black+   charms/ll:COLOR_CYAN    charms/ll:COLOR_BLACK)
+
+  ;; green
+  (+color-green-black+  charms/ll:COLOR_GREEN   charms/ll:COLOR_BLACK)
+  (+color-black-green+  charms/ll:COLOR_BLACK charms/ll:COLOR_GREEN)
+  (+color-white-green+  charms/ll:COLOR_WHITE charms/ll:COLOR_GREEN)
+  (+color-green-white+  charms/ll:COLOR_GREEN charms/ll:COLOR_WHITE)
+
+  ;; yellow
+  (+color-yellow-black+  charms/ll:COLOR_YELLOW charms/ll:COLOR_BLACK)
+  (+color-black-yellow+  charms/ll:COLOR_BLACK charms/ll:COLOR_YELLOW)
+  (+color-yellow-white+  charms/ll:COLOR_YELLOW charms/ll:COLOR_WHITE)
+  (+color-white-yellow+  charms/ll:COLOR_WHITE charms/ll:COLOR_YELLOW )
+
+  ;; red
+  (+color-red-black+  charms/ll:COLOR_RED charms/ll:COLOR_BLACK)
+  (+color-black-red+  charms/ll:COLOR_BLACK charms/ll:COLOR_RED)
+  (+color-white-red+    charms/ll:COLOR_WHITE charms/ll:COLOR_RED)
+  (+color-red-white+    charms/ll:COLOR_RED charms/ll:COLOR_WHITE)
+
+  ;; pink
+  (+color-pink-black+   charms/ll:COLOR_MAGENTA charms/ll:COLOR_BLACK)
+  (+color-black-pink+   charms/ll:COLOR_BLACK charms/ll:COLOR_MAGENTA)
+  (+color-pink-white+   charms/ll:COLOR_MAGENTA charms/ll:COLOR_WHITE)
+  (+color-white-pink+   charms/ll:COLOR_WHITE charms/ll:COLOR_MAGENTA)
+
+  (+color-black-black+   charms/ll:COLOR_BLACK charms/ll:COLOR_BLACK))
+
+(defparameter *charms-win* nil)
+
+(defun init-charms ()
+  (force-output *terminal-io*)
+  (charms:initialize)
+  (charms/ll:timeout 100)
+  ;; disable-non-blocking-mode made redundant by setting timeout to positive value
+  ;;(charms:disable-non-blocking-mode *charms-win*)
+  (setf *charms-win* (charms:standard-window))
+  (charms:disable-echoing)
+  (charms/ll:curs-set 0) ;; invisible cursor
+  (charms/ll:start-color)
+  (init-colors)
+  (charms:enable-raw-input :interpret-control-characters t))
+
+(defmacro with-charms (&body body)
+  `(unwind-protect
+        (progn
+          (init-charms)
+          ,@body)
+     (charms:finalize)))
+
+(defun append-char (string char)
+  (concatenate 'string string (coerce (list char) 'string)))
+
+
+(defun draw ()
+  (multiple-value-bind (width height) (charms:window-dimensions *charms-win*)
+    (setf *screen-width* width
+          *screen-height* height)
+    (charms:clear-window *charms-win* :force-repaint t)
+    #++(with-color +color-white-black+
+         (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
+    (charms:refresh-window *charms-win*)))
+
+(defun main-loop (buffer)
+  (f:update-swank)
+  (multiple-value-bind (width height) (charms:window-dimensions *charms-win*)
+    (setf *screen-width* width
+          *screen-height* height))
+  (let ((char (charms:get-char *charms-win* :ignore-error t)))
+    (when char
+      (case char
+        (#\esc
+         (return-from main-loop))
+        (#\rubout
+         (setf buffer (subseq buffer 0 (max 0 (1- (length buffer)))))
+         (format t "buffer is now ~s~%" buffer))
+        (t
+         (setf buffer (append-char buffer char))
+         (format t "buffer is now ~s~%" buffer))))
+    (charms:clear-window *charms-win* :force-repaint t)
+    (write-string-at buffer 1 1 +color-white-black+)
+    (charms:refresh-window *charms-win*)
+    (main-loop buffer)))
 
 (defun lightning-cd ()
-  (let ((mode *default-mode*)
-        (selected-files ())
-        (search-buffer ())
-        (selected-index 0)
-        (all-files ())
-        (width 0)
-        (height 0))
-    (flet ((clear-search-state ()
-             (setf mode *default-mode*
-                   all-files ()
-                   selected-files ()
-                   selected-index 0
-                   search-buffer ())))
-      (setf *current-directory* (or (cd (read-string-from-file *lightning-initial-path-file*) *current-directory*) (namestring *default-pathname-defaults*)))
-
-      (charms:with-curses ()
-        (charms:disable-echoing)
-        (charms:enable-raw-input)
-
-        (loop :named lightning
-              :do (progn
-
-                    (charms:clear-window charms:*standard-window*)
-
-                    (multiple-value-bind (w h) (charms:window-dimensions charms:*standard-window*)
-                      (setf width w
-                            height h))
-
-                    ;; if files is nil, then we've nuked the buffer because of a cd or something; time to regenerate!
-                    (or all-files (setf all-files (sort (ls *current-directory*) (lambda (x y)
-                                                                                   (string< (getf x :name) (getf y :name))))))
-
-                    ;; if we're in search mode, only show files that match the buffer
-                    (and (eq mode :search) search-buffer
-                         (setf selected-files (select-files-in-search-buffer all-files search-buffer)))
-
-                    ;; draw the current mode, current directory, file list, and search buffer, respectively
-                    (charms:write-string-at-point charms:*standard-window* (strcat (string mode) ": " *current-directory*) 0 0)
-                    (draw-file-list 1 (1- height) mode selected-files selected-index all-files)
-                    (if (eq mode :search)
-                        (charms:write-string-at-point charms:*standard-window* (or search-buffer "") 0 (1- height)))
-
-                    (charms:refresh-window charms:*standard-window*)
-
-                    ;; get and process input
-                    ;; if we're in search mode with only one selected file, then open it
-                    (if (and (eq mode :search) (= (length selected-files) 1) (plusp (length search-buffer)))
-                        (progn
-                          (action (first selected-files) *current-directory*)
-                          (clear-search-state))
-                        (let ((char (charms:get-char charms:*standard-window* :ignore-error t)))
-                          (when char
-                            (case (symbol-to-action char mode *bindings*)
-                             (:refresh-file-list
-                              (clear-search-state))
-                             (:toggle-mode
-                              (let ((result (switch-mode mode selected-index selected-files all-files)))
-                                (setf mode (nth 0 result)
-                                      selected-index (nth 1 result)
-                                      selected-files ()
-                                      search-buffer ())))
-                             (:up-one-dir
-                              (setf *current-directory* (cd ".." *current-directory*))
-                              (clear-search-state))
-                             (:quit
-                                 (open-file-with-command *current-directory* "true"))
-                             (:select-down
-                              (setf selected-index (mod (1+ selected-index) (length all-files))))
-                             (:select-up
-                              (setf selected-index (mod (1- selected-index) (length all-files))))
-                             (:open-path
-                              (action (nth selected-index all-files) *current-directory*)
-                              (clear-search-state))
-                             (:delete-char
-                              (if (plusp (length search-buffer))
-                                  (let ((new-search-buffer (subseq search-buffer 0 (1- (length search-buffer)))))
-                                    (setf search-buffer (if (string= new-search-buffer "") nil new-search-buffer)
-                                          selected-files nil)))))
-                            (if (and (not (equal char #\Null)) (eq mode :search))
-                                (let ((new-selection (select-files-in-search-buffer (or selected-files all-files) (strcat (or search-buffer "") (to-string (list char))))))
-                                  (if (and (is-acceptable-char char) new-selection)
-                                      (setf search-buffer (strcat (or search-buffer "") (to-string (list char)))
-                                            selected-files new-selection)))))))))))))
+  (with-charms
+    (main-loop "")))
 
 (defun main (args)
   (declare (ignore args))
   (lightning-cd))
-
-(defun cl-user::dewit ()
-  (funcall (intern "QUICKLOAD" :ql) :lightning-cd)
-  (funcall (intern "LIGHTNING-CD" :lightning-cd)))

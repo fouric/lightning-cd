@@ -13,7 +13,7 @@
     (sleep .5)
     (emacsclient-eval "(funcall 'slime-repl-eval-string \\\"(in-package :lightning-cd)\\\")")
     (sleep .5)
-    (emacsclient-eval "(funcall 'slime-repl-eval-string \\\"(fresh-start nil t)\\\")")
+    (emacsclient-eval "(funcall 'slime-repl-eval-string \\\"(lightning-cd)\\\")")
     (loop (sleep 1))))
 
 (lightning-dev)
