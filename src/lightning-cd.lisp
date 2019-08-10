@@ -117,5 +117,5 @@
   (lightning-cd))
 
 (defun cl-user::dewit ()
-  (ql:quickload :lightning-cd)
+  (funcall (intern "QUICKLOAD" :ql) :lightning-cd)
   (funcall (intern "LIGHTNING-CD" :lightning-cd)))

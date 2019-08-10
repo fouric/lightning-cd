@@ -4,5 +4,4 @@
 
 # reminder: check your color scheme if you're getting gray backgrounds!
 
-e src/lightning.lisp
 /usr/bin/sbcl --noinform --load lightning-dev.lisp
