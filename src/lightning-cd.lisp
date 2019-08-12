@@ -11,8 +11,8 @@
 (defmacro defcolors (&rest colors)
   `(progn
      ,@(iterate (for n :from 0)
-                (for (constant nil nil) :in colors)
-                (collect `(defparameter ,constant ,n)))
+         (for (constant nil nil) :in colors)
+         (collect `(defparameter ,constant ,n)))
      (defun init-colors ()
        ,@(iterate
            (for (constant fg bg) :in colors)
@@ -111,31 +111,61 @@
          (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
     (charms:refresh-window *charms-win*)))
 
-(defun main-loop (buffer)
+(defun hacky-name (namestring)
+  (let ((chunks (remove-if-not (lambda (str) (plusp (length str))) (split-sequence:split-sequence #\/ namestring))))
+    (first (last chunks))))
+
+(defun main-loop (buffer current-directory)
   (f:update-swank)
+  (unless current-directory
+    (setf current-directory (user-homedir-pathname)))
   (multiple-value-bind (width height) (charms:window-dimensions *charms-win*)
     (setf *screen-width* (1- width)
           *screen-height* height))
-  (let ((char (charms:get-char *charms-win* :ignore-error t)))
+  (let ((char (charms:get-char *charms-win* :ignore-error t))
+        dirty?)
     (when char
       (case char
         (#\esc
          (return-from main-loop))
         (#\rubout
-         (setf buffer (subseq buffer 0 (max 0 (1- (length buffer)))))
-         (format t "buffer is now ~s~%" buffer))
+         (setf buffer (subseq buffer 0 (max 0 (1- (length buffer))))
+               dirty? t))
+        (#\page
+         (fresh-line)
+         (format t "cwd is ~s~%" current-directory))
         (t
-         (setf buffer (append-char buffer char))
-         (format t "buffer is now ~s~%" buffer))))
-    (charms:clear-window *charms-win* :force-repaint t)
-    (write-string-at (concatenate 'string "> " buffer) 1 (1- *screen-height*) +color-white-black+)
-    (charms:refresh-window *charms-win*)
-    (main-loop buffer)))
+         (setf buffer (append-char buffer char)
+               dirty? t))))
+    ;;(setf current-directory "/home/fouric/async/")
+    (when dirty?
+      (let* ((directories (uiop:directory-files current-directory))
+             (files (uiop:subdirectories current-directory))
+             (everything (append files directories))
+             (height (- *screen-height* 2))
+             (chunks nil)
+             (count 0)
+             chunk)
+        (dolist (item everything)
+          (when (>= count height)
+            (push chunk chunks)
+            (setf count 0
+                  chunk nil))
+          (push item chunk)
+          (incf count))
+        (push chunk chunks)
+        (setf chunks (nreverse chunks))
+        (charms:clear-window *charms-win* :force-repaint t)
+        (let ((y -1))
+          (dolist (item (reverse (first (last chunks))))
+            (write-string-at (hacky-name (namestring item)) 1 (incf y))))
+        (write-string-at (concatenate 'string "> " buffer) 1 (1- *screen-height*) +color-white-black+)
+        (charms:refresh-window *charms-win*)))
+    (main-loop buffer current-directory)))
 
-(defun lightning-cd ()
+(defun lightning-cd (&optional (current-directory (user-homedir-pathname)))
   (with-charms
-    (main-loop "")))
+    (main-loop "" current-directory)))
 
 (defun main (args)
-  (declare (ignore args))
-  (lightning-cd))
+  (lightning-cd (first args)))
