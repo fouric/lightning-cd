@@ -112,6 +112,7 @@
     (charms:refresh-window *charms-win*)))
 
 (defun hacky-name (namestring)
+  ;; use PATHNAME-DIRECTORY
   (let ((chunks (remove-if-not (lambda (str) (plusp (length str))) (split-sequence:split-sequence #\/ namestring))))
     (first (last chunks))))
 
