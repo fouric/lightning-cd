@@ -7,10 +7,11 @@
   (f:clear-window t)
   (let ((x 1))
     (dolist (column columns)
-      (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name column)))))
+      ;; each column is a list of CONS CELLS (car is :directory/:file, cdr is path) and not just paths
+      (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name (mapcar #'cdr column))))))
             (y -1))
         (dolist (item column)
-          (f:write-string-at (hacky-name (namestring item)) x (incf y)))
+          (f:write-string-at (hacky-name (namestring (cdr item))) x (incf y)))
         (incf x width))))
   (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
   #++(with-color +color-white-black+
@@ -28,6 +29,11 @@
   ;; use PATHNAME-DIRECTORY
   (let ((chunks (remove-if-not (lambda (str) (plusp (length str))) (split-sequence:split-sequence #\/ namestring))))
     (first (last chunks))))
+
+(defun list-items (directory)
+  (let* ((directories (loop for dir in (uiop:directory-files directory) collect (cons :directory dir)))
+         (files (loop for file in (uiop:subdirectories directory) collect (cons :file file))))
+    (sort (mapcar (lambda (blob) (cons (car blob) (namestring (cdr blob)))) (append files directories)) #'string< :key #'cdr)))
 
 (defun main-loop (buffer current-directory)
   (f:update-swank)
@@ -58,9 +64,7 @@
     ;;(setf current-directory "/home/fouric/async/")
     (when dirty?
       ;; we should definitely not re-list directory contents in user interaction loop - use entr(1) or something in a background process, or only refresh when explicitly requested
-      (let* ((directories (uiop:directory-files current-directory))
-             (files (uiop:subdirectories current-directory))
-             (everything (sort (mapcar #'namestring (append files directories)) #'string<))
+      (let* ((everything (list-items current-directory))
              (height (- f:*screen-height* 2))
              (columns (split-list everything height)))
         (draw columns buffer)))
