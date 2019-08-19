@@ -19,18 +19,10 @@
 
 (defun split-list (list max-sublist-size)
   "takes a single flat list and splits it into a list of sublists each with no more than MAX-SUBLIST-SIZE elements"
-  (let ((count 0)
-        sublists
-        chunk)
-    (dolist (item list)
-      (when (>= count max-sublist-size)
-        (push (nreverse chunk) sublists)
-        (setf count 0
-              chunk nil))
-      (push item chunk)
-      (incf count))
-    (push chunk sublists)
-    (nreverse sublists)))
+  (loop :while list
+        :collect (loop :repeat max-sublist-size
+                       :when list
+                         :collect (pop list))))
 
 (defun hacky-name (namestring)
   ;; use PATHNAME-DIRECTORY
