@@ -47,6 +47,9 @@
         (#\page ;; what?
          (fresh-line)
          (format t "cwd is ~s~%" current-directory))
+        (#\Vt ;; C-k
+         (setf buffer ""
+               dirty? t))
         (t
          (if (<= (char-code #\space) (char-code char) (char-code #\~))
            (setf buffer (append-char buffer char)
