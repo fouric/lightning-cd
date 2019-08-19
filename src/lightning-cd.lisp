@@ -1,11 +1,14 @@
 (in-package :lightning-cd)
 
-;; TODO: these don't actually do anything unless you set *screen-width* and *screen-height* - and currently, you don't!
 (defun append-char (string char)
   (concatenate 'string string (coerce (list char) 'string)))
 
-(defun draw ()
-  (f:clear-window)
+(defun draw (chunks buffer)
+  (f:clear-window t)
+  (let ((y -1))
+    (dolist (item (reverse (first (last chunks))))
+      (f:write-string-at (hacky-name (namestring item)) 1 (incf y))))
+  (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
   #++(with-color +color-white-black+
        (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
   (f:refresh-window))
@@ -53,12 +56,7 @@
           (incf count))
         (push chunk chunks)
         (setf chunks (nreverse chunks))
-        (f:clear-window t)
-        (let ((y -1))
-          (dolist (item (reverse (first (last chunks))))
-            (f:write-string-at (hacky-name (namestring item)) 1 (incf y))))
-        (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
-        (f:refresh-window)))
+        (draw chunks buffer)))
     (main-loop buffer current-directory)))
 
 (defun lightning-cd (&optional (current-directory (user-homedir-pathname)))
