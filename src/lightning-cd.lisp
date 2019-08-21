@@ -3,20 +3,23 @@
 (defun append-char (string char)
   (concatenate 'string string (coerce (list char) 'string)))
 
-(defun draw (columns buffer)
-  (f:clear-window t)
-  (let ((x 1))
-    (dolist (column columns)
-      ;; each column is a list of CONS CELLS (car is :directory/:file, cdr is path) and not just paths
-      (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name (mapcar #'cdr column))))))
-            (y -1))
-        (dolist (item column)
-          (f:write-string-at (hacky-name (namestring (cdr item))) x (incf y)))
-        (incf x width))))
-  (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
-  #++(with-color +color-white-black+
-       (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
-  (f:refresh-window))
+(defun draw (buffer current-directory)
+  (let* ((everything (list-items current-directory))
+         (height (- f:*screen-height* 2))
+         (columns (split-list everything height)))
+    (f:clear-window t)
+    (let ((x 1))
+      (dolist (column columns)
+        ;; each column is a list of CONS CELLS (car is :directory/:file, cdr is path) and not just paths
+        (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name (mapcar #'cdr column))))))
+              (y -1))
+          (dolist (item column)
+            (f:write-string-at (hacky-name (namestring (cdr item))) x (incf y)))
+          (incf x width))))
+    (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
+    #++(with-color +color-white-black+
+         (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
+    (f:refresh-window)))
 
 (defun split-list (list max-sublist-size)
   "takes a single flat list and splits it into a list of sublists each with no more than MAX-SUBLIST-SIZE elements"
@@ -64,14 +67,12 @@
     ;;(setf current-directory "/home/fouric/async/")
     (when dirty?
       ;; we should definitely not re-list directory contents in user interaction loop - use entr(1) or something in a background process, or only refresh when explicitly requested
-      (let* ((everything (list-items current-directory))
-             (height (- f:*screen-height* 2))
-             (columns (split-list everything height)))
-        (draw columns buffer)))
+      (draw buffer current-directory))
     (main-loop buffer current-directory)))
 
 (defun lightning-cd (&optional (current-directory (concatenate 'string (namestring (user-homedir-pathname)) "/")))
   (f:with-charms (:timeout 100 :color nil :raw-input t :interpret-control-characters t)
+    (draw "" current-directory)
     (main-loop "" current-directory)))
 
 (defun main (args)
