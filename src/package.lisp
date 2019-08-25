@@ -1,4 +1,4 @@
 (defpackage :lightning-cd
-  (:use :cl :iterate :alexandria)
+  (:use :cl :alexandria)
   (:local-nicknames (:f :fouric))
   (:export #:lightning-cd))

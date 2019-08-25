@@ -14,7 +14,7 @@
   :description "lightning-quick mc/cd/autojump/rofi hybrid "
 
   :serial t
-  :depends-on (:split-sequence :trivial-shell :cl-charms :iterate :alexandria :fouric)
+  :depends-on (:split-sequence :trivial-shell :cl-charms :alexandria :fouric)
   :pathname "src"
   :components ((:file "package")
                (:file "lightning-cd")))
