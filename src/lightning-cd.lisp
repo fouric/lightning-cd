@@ -22,6 +22,13 @@
     (:directory
      (f:write-string-at (append-char (hacky-name (namestring (cdr item))) #\/) x y f:+color-blue-black+))))
 
+(defun draw-column (column x y)
+  ;; each column is a list of CONS CELLS (car is :directory/:file, cdr is path) and not just paths
+  (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name (mapcar #'cdr column))))))
+        (y (1- y)))
+    (dolist (item column width)
+      (draw-item item x (incf y)))))
+
 (defun draw (buffer current-directory)
   (f:clear-window t)
   (let* ((everything (list-items current-directory))
@@ -29,15 +36,8 @@
          (columns (split-list everything height))
          (x 1))
     (dolist (column columns)
-      ;; each column is a list of CONS CELLS (car is :directory/:file, cdr is path) and not just paths
-      (let ((width (+ 3 (apply #'max (mapcar #'length (mapcar #'hacky-name (mapcar #'cdr column))))))
-            (y -1))
-        (dolist (item column)
-          (draw-item item x (incf y)))
-        (incf x width)))
+      (incf x (draw-column column x 0)))
     (f:write-string-at (concatenate 'string "> " buffer) 1 (1- f:*screen-height*) f:+color-white-black+)
-    #++(with-color +color-white-black+
-         (charms:write-string-at-point *charms-win* (concatenate 'string ": " *shell-contents*) 1 (1- height)))
     (f:refresh-window)))
 
 (defun main-loop (buffer current-directory)
