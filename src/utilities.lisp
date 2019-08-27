@@ -1,38 +1,12 @@
 (in-package :lightning-cd)
 
-(proclaim '(optimize (speed 0) (safety 0) (space 0) (debug 3)))
+(defun split-list (list max-sublist-size)
+  "takes a single flat list and splits it into a list of sublists each with no more than MAX-SUBLIST-SIZE elements"
+  (assert (> max-sublist-size 0))
+  (loop :while list
+        :collect (loop :repeat max-sublist-size
+                       :when list
+                         :collect (pop list))))
 
-(defun read-string-from-file (filename)
-  (with-open-file (in filename
-                      :direction :input
-                      :if-exists :supersede)
-    (with-standard-io-syntax
-      (read-line in))))
-
-(defun write-data (filename data)
-  (with-open-file (out filename
-                       :direction :output
-                       :if-exists :supersede)
-    (with-standard-io-syntax
-      (print data out))))
-
-(defun write-string-to-file (filename string)
-  (with-open-file (out filename
-                       :direction :output
-                       :if-exists :supersede)
-    (with-standard-io-syntax
-      (format out "~A" string))))
-
-(defun mapgetf (files key)
-  (mapcar (lambda (f)
-            (getf f key)) files))
-
-
-(defun to-list (item)
-  (coerce item 'list))
-
-(defun to-string (item)
-  (coerce item 'string))
-
-(defun strcat (first &rest others)
-  (apply #'concatenate 'string first others))
+(defun append-char (string char)
+  (concatenate 'string string (coerce (list char) 'string)))

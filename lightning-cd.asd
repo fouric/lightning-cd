@@ -17,4 +17,5 @@
   :depends-on (:split-sequence :trivial-shell :cl-charms :alexandria :fouric)
   :pathname "src"
   :components ((:file "package")
+               (:file "utilities")
                (:file "lightning-cd")))
