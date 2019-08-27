@@ -5,13 +5,22 @@
   (let ((chunks (remove-if-not (lambda (str) (plusp (length str))) (split-sequence:split-sequence #\/ namestring))))
     (first (last chunks))))
 
-(defun list-items (directory)
+(defun list-items (directory &key (ordering-strategy :by-type))
+  "takes DIRECTORY as a pathspec/namestring and returns a list of cons cells where each car is :file or :directory and each cdr is the namestring of an item in the directory"
   (let* ((files (loop for dir in (uiop:directory-files directory) collect (cons :file dir)))
          (directories (loop for file in (uiop:subdirectories directory) collect (cons :directory file))))
-    (sort (mapcar (lambda (blob) (cons (car blob) (namestring (cdr blob)))) (append files directories)) #'string< :key #'cdr)))
+    (case ordering-strategy
+      (:by-type
+       (mapcar (lambda (item) (cons (car item) (namestring (cdr item)))) (append directories files)))
+      (:by-name
+       (sort (mapcar (lambda (blob) (cons (car blob) (namestring (cdr blob)))) (append files directories)) #'string< :key #'cdr)))))
 
 (defun draw-item (item x y)
-  (f:write-string-at (hacky-name (namestring (cdr item))) x y))
+  (case (car item)
+    (:file
+     (f:write-string-at (hacky-name (namestring (cdr item))) x y))
+    (:directory
+     (f:write-string-at (append-char (hacky-name (namestring (cdr item))) #\/) x y f:+color-blue-black+))))
 
 (defun draw (buffer current-directory)
   (f:clear-window t)
@@ -64,7 +73,7 @@
     (main-loop buffer current-directory)))
 
 (defun lightning-cd (&optional (current-directory (concatenate 'string (namestring (user-homedir-pathname)) "/")))
-  (f:with-charms (:timeout 100 :color nil :raw-input t :interpret-control-characters t)
+  (f:with-charms (:timeout 100 :color t :raw-input t :interpret-control-characters t)
     (draw "" current-directory)
     (main-loop "" current-directory)))
 
