@@ -6,8 +6,8 @@
     (first (last chunks))))
 
 (defun list-items (directory)
-  (let* ((directories (loop for dir in (uiop:directory-files directory) collect (cons :directory dir)))
-         (files (loop for file in (uiop:subdirectories directory) collect (cons :file file))))
+  (let* ((files (loop for dir in (uiop:directory-files directory) collect (cons :file dir)))
+         (directories (loop for file in (uiop:subdirectories directory) collect (cons :directory file))))
     (sort (mapcar (lambda (blob) (cons (car blob) (namestring (cdr blob)))) (append files directories)) #'string< :key #'cdr)))
 
 (defun draw-item (item x y)
